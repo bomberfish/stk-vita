@@ -904,7 +904,7 @@ IFileList* CFileSystem::createFileList(const io::path& directory)
 					size = buf.st_size;
 					isDirectory = S_ISDIR(buf.st_mode);
 				}
-				#if !defined(_IRR_SOLARIS_PLATFORM_) && !defined(__CYGWIN__) && !defined(__HAIKU__) && !defined(__sun)
+				#if !defined(_IRR_SOLARIS_PLATFORM_) && !defined(__CYGWIN__) && !defined(__HAIKU__) && !defined(__sun) && !defined(VITA)
 				// only available on some systems
 				else
 				{
@@ -1111,4 +1111,3 @@ std::unique_lock<std::recursive_mutex> CFileSystem::acquireFileArchivesMutex() c
 
 } // end namespace irr
 } // end namespace io
-

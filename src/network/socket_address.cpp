@@ -25,6 +25,8 @@
 #  undef _WIN32_WINNT
 #  define _WIN32_WINNT 0x600
 #  include <iphlpapi.h>
+#elifdef VITA
+#  include <psp2/net/netctl.h>
 #else
 #ifndef __SWITCH__
 #  include <ifaddrs.h>
@@ -101,7 +103,7 @@ SocketAddress::SocketAddress(const ENetAddress& ea)
     }
 #else
     m_family = AF_INET;
-#ifdef __SWITCH__
+#if defined(__SWITCH__) || defined(VITA)
     setIP(htonl(ea.host.p0));
 #else
     setIP(htonl(ea.host));
@@ -339,6 +341,24 @@ bool SocketAddress::isPublicAddressLocalhost() const
         }
         else if(currentIp)
             return htonl(currentIp) == getIP();
+    }
+    return false;
+#elif defined(VITA)
+    if (m_family == AF_INET)
+    {
+        SceNetCtlInfo info;
+        if (sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_IP_ADDRESS, &info) < 0)
+        {
+            Log::warn("SocketAddress", "Failed to get current address!");
+        }
+        else if (info.ip_address[0] != '\0')
+        {
+            struct in_addr cur = {};
+            if (inet_pton(AF_INET, info.ip_address, &cur) == 1)
+                return ntohl(cur.s_addr) == getIP();
+            Log::warn("SocketAddress", "Failed to parse current address %s!",
+                info.ip_address);
+        }
     }
     return false;
 #elif !defined(WIN32)
@@ -744,7 +764,7 @@ ENetAddress SocketAddress::toENetAddress() const
 {
     ENetAddress ea = {};
     uint32_t ip = getIP();
-#if defined(ENABLE_IPV6) || defined(__SWITCH__)
+#if defined(ENABLE_IPV6) || defined(__SWITCH__) || defined(VITA)
     if (isIPv6Socket())
     {
         struct sockaddr_in6* in6 = (struct sockaddr_in6*)m_sockaddr.data();

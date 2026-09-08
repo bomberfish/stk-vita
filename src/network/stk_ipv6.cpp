@@ -34,7 +34,7 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(VITA)
 #include <err.h>
 #endif
 #include <netdb.h>

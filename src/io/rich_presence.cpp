@@ -21,7 +21,7 @@
 #include "online/request_manager.hpp"
 #include "online/http_request.hpp"
 
-#if defined(__SWITCH__) || defined(MOBILE_STK) || defined(SERVER_ONLY)
+#if defined(__SWITCH__) || defined(MOBILE_STK) || defined(SERVER_ONLY) || defined(VITA)
 #define DISABLE_RPC
 #endif
 

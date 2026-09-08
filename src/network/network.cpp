@@ -37,7 +37,7 @@
 #else
 #  include <arpa/inet.h>
 #  include <errno.h>
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(VITA)
 #  include <ifaddrs.h>
 #endif
 #  include <sys/socket.h>

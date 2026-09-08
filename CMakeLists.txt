@@ -16,6 +16,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 CMAKE_DEPENDENT_OPTION(USE_SWITCH "Build targeting switch" OFF "NOT NINTENDO_SWITCH" ON)
+CMAKE_DEPENDENT_OPTION(VITA "Build targeting PS Vita" OFF "NOT VITA" ON)
 
 if(WIN32)
     option(USE_DIRECTX "Build DirectX 9 driver (requires DirectX SDK)" OFF)
@@ -27,7 +28,7 @@ option(USE_SYSTEM_ANGELSCRIPT "Use system angelscript instead of built-in angels
 option(USE_SYSTEM_ENET "Use system ENet instead of the built-in version, when available." ON)
 option(USE_SYSTEM_MCPP "Use system mcpp instead of the built-in version, when available." ON)
 CMAKE_DEPENDENT_OPTION(USE_IPV6 "Allow create or connect to game server with IPv6 address, system enet will not be used." ON
-  "NOT USE_SWITCH" OFF)
+  "NOT USE_SWITCH;NOT VITA" OFF)
 option(USE_SYSTEM_WIIUSE "Use system WiiUse instead of the built-in version, when available." OFF)
 option(USE_SQLITE3 "Use sqlite to manage server stats and ban list." ON)
 
@@ -39,12 +40,12 @@ endif()
 CMAKE_DEPENDENT_OPTION(USE_CRYPTO_OPENSSL "Use OpenSSL instead of MbedTLS for cryptography in STK." ON
     "NOT USE_SWITCH;NOT WIN32" OFF)
 CMAKE_DEPENDENT_OPTION(BUILD_RECORDER "Build opengl recorder" ON
-    "NOT SERVER_ONLY;NOT APPLE;NOT USE_SWITCH" OFF)
+    "NOT SERVER_ONLY;NOT APPLE;NOT USE_SWITCH; NOT VITA" OFF)
 CMAKE_DEPENDENT_OPTION(USE_SYSTEM_SQUISH "Use system Squish library instead of the built-in version, when available." ON
     "NOT SERVER_ONLY" OFF)
 CMAKE_DEPENDENT_OPTION(USE_WIIUSE "Support for wiimote input devices" ON
-    "NOT SERVER_ONLY;NOT CYGWIN;NOT USE_SWITCH;NOT MSVC" OFF)
-CMAKE_DEPENDENT_OPTION(USE_DNS_C "Build bundled dns resolver" OFF "NOT CYGWIN;NOT USE_SWITCH" ON)
+    "NOT SERVER_ONLY;NOT CYGWIN;NOT USE_SWITCH;NOT MSVC; NOT VITA" OFF)
+CMAKE_DEPENDENT_OPTION(USE_DNS_C "Build bundled dns resolver" OFF "NOT CYGWIN;NOT USE_SWITCH;NOT VITA" ON)
 CMAKE_DEPENDENT_OPTION(USE_MOJOAL "Use bundled MojoAL instead of system OpenAL" OFF "NOT APPLE" ON)
 CMAKE_DEPENDENT_OPTION(HAVE_OPUS "Enable Opus audio codec support (requires libopusfile)" OFF
     "NOT SERVER_ONLY" OFF)
@@ -79,6 +80,14 @@ if(APPLE AND NOT IOS)
     endif()
 endif()
 
+if(VITA)
+  # ADD_DEFINITIONS(-DMOBILE_STK)
+  ADD_DEFINITIONS(-DVITA_STK)
+  ADD_DEFINITIONS(-DVITA)
+  set(NO_SHADERC ON CACHE BOOL "Disable shaderc for Vita" FORCE) # no vulkan!!
+  include(FindPkgConfig)
+endif()
+
 if (IOS)
     ADD_DEFINITIONS(-DMOBILE_STK)
     ADD_DEFINITIONS(-DIOS_STK)
@@ -87,7 +96,7 @@ if (IOS)
 endif()
 
 if((UNIX AND NOT APPLE) AND NOT SERVER_ONLY)
-    if((${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm") OR 
+    if((${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm") OR
        (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64") OR
        (${CMAKE_SYSTEM_PROCESSOR} MATCHES "riscv64"))
         option(USE_GLES2 "Use OpenGL ES2 renderer" ON)
@@ -755,6 +764,11 @@ if (USE_SWITCH)
   )
 endif()
 
+if (VITA)
+  find_library(SCENETCTL_STUB_LIBRARY NAMES SceNetCtl_stub REQUIRED)
+  target_link_libraries(supertuxkart ${SCENETCTL_STUB_LIBRARY})
+endif()
+
 if(NOT SERVER_ONLY)
     if (USE_MOJOAL)
         target_link_libraries(supertuxkart mojoal ${LIBSAMPLERATE_LIBRARY})
@@ -887,8 +901,8 @@ endif()
 if(MSVC)
   SET(CMAKE_SHARED_LINKER_FLAGS /MANIFEST:NO)
   add_custom_command(
-    TARGET supertuxkart POST_BUILD COMMAND "mt.exe" 
-    -manifest \"${PROJECT_SOURCE_DIR}\\windows\\dpi_aware.manifest\" 
+    TARGET supertuxkart POST_BUILD COMMAND "mt.exe"
+    -manifest \"${PROJECT_SOURCE_DIR}\\windows\\dpi_aware.manifest\"
     -inputresource:\"$<TARGET_FILE:supertuxkart>\"\;\#1
     -outputresource:\"$<TARGET_FILE:supertuxkart>\"\;\#1)
 endif()

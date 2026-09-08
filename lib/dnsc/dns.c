@@ -70,7 +70,7 @@
 #include <sys/types.h>		/* FD_SETSIZE socklen_t */
 #include <sys/select.h>		/* FD_ZERO FD_SET fd_set select(2) */
 #include <sys/socket.h>		/* AF_INET AF_INET6 AF_UNIX struct sockaddr struct sockaddr_in struct sockaddr_in6 socket(2) */
-#ifdef __SWITCH__
+#if defined(__SWITCH__) || defined(VITA)
 #include <sys/socket.h>
 #elif defined(AF_UNIX)
 #include <sys/un.h>		/* struct sockaddr_un */
@@ -852,8 +852,7 @@ DNS_NOTUSED static size_t dns_strnlcpy(char *dst, size_t lim, const char *src, s
 	return len;
 } /* dns_strnlcpy() */
 
-
-#if (defined AF_UNIX && !defined _WIN32 && !defined(__SWITCH__))
+#if (defined AF_UNIX && !defined _WIN32 && !defined(__SWITCH__) && !defined(VITA))
 #define DNS_HAVE_SOCKADDR_UN 1
 #else
 #define DNS_HAVE_SOCKADDR_UN 0
@@ -1207,7 +1206,7 @@ DNS_NOTUSED static int dns_sigmask(int how, const sigset_t *set, sigset_t *oset)
 static long dns_send(int fd, const void *src, size_t lim, int flags) {
 	ENTERING1("dns_send(%d, %p, %lu, 0x%x)", fd, src, lim, flags);
 
-#if _WIN32 || !defined SIGPIPE || defined SO_NOSIGPIPE
+#if _WIN32 || !defined SIGPIPE || defined SO_NOSIGPIPE || defined VITA
 	CALLING("send() [1]");
 	ssize_t res = send(fd, src, lim, flags);
 	LEAVING1("dns_send = %ld", res);
@@ -8505,7 +8504,9 @@ static dns_error_t dns_ai_parseport(unsigned short *port, const char *serv, stru
 		LEAVING("dns_ai_parseport() [error] 2.");
 		return DNS_ESERVICE;
 	}
-
+#ifdef VITA
+	return DNS_ESERVICE;
+#else
 	char const* proto_name = NULL;
 	if (hints->ai_protocol)		// Zero means 'any protocol'.
 	{
@@ -8527,6 +8528,7 @@ static dns_error_t dns_ai_parseport(unsigned short *port, const char *serv, stru
 	*port = ntohs(serv_ent->s_port);
 	LEAVING1("dns_ai_parseport() returned port %hu", *port);
 	return 0;
+#endif
 } /* dns_ai_parseport() */
 
 

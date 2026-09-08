@@ -413,7 +413,7 @@ int ConnectToServer::interceptCallback(ENetHost* host, ENetEvent* event)
         host->receivedData[8] == '-' && host->receivedData[9] == 's' &&
         host->receivedData[10] == 't' && host->receivedData[11] == 'k')
     {
-#if defined(ENABLE_IPV6) || defined(__SWITCH__)
+#if defined(ENABLE_IPV6) || defined(__SWITCH__) || defined(VITA)
         if (enet_ip_not_equal(host->receivedAddress.host, m_server_address.host) ||
 #else
         if (host->receivedAddress.host != m_server_address.host ||

@@ -43,6 +43,9 @@
 #  undef _WIN32_WINNT
 #  define _WIN32_WINNT 0x600
 #  include <iphlpapi.h>
+#elifdef VITA
+#  include <psp2/net/netctl.h>
+#  include <arpa/inet.h>
 #else
 #ifndef __SWITCH__
 #  include <ifaddrs.h>
@@ -424,6 +427,35 @@ std::vector<SocketAddress> ServersManager::getBroadcastAddresses(bool ipv6)
     {
         Log::warn("ServersManager", "Failed to get broadcast address! Error 0x%x", resultCode);
         result = getDefaultBroadcastAddresses();
+    }
+#elif defined(VITA)
+    SceNetCtlInfo ip_info;
+    SceNetCtlInfo mask_info;
+    struct in_addr ip = {};
+    struct in_addr mask = {};
+    if (sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_IP_ADDRESS, &ip_info) < 0 ||
+        sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_NETMASK, &mask_info) < 0)
+    {
+        Log::warn("ServersManager", "Failed to get broadcast address!");
+        result = getDefaultBroadcastAddresses();
+    }
+    else if (inet_pton(AF_INET, ip_info.ip_address, &ip) != 1 ||
+        inet_pton(AF_INET, mask_info.netmask, &mask) != 1)
+    {
+        Log::warn("ServersManager", "Failed to parse address %s netmask %s!",
+            ip_info.ip_address, mask_info.netmask);
+        result = getDefaultBroadcastAddresses();
+    }
+    else
+    {
+        uint32_t addr = ntohl(ip.s_addr);
+        uint32_t u = ntohl(mask.s_addr);
+        // Convert mask to #bits:  SWAT algorithm
+        u = u - ((u >> 1) & 0x55555555);
+        u = (u & 0x33333333) + ((u >> 2) & 0x33333333);
+        u = (((u + (u >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+        SocketAddress saddr(addr);
+        addAllBroadcastAddresses(saddr, u, &result);
     }
 #elif !defined(WIN32)
     struct ifaddrs *addresses, *p;

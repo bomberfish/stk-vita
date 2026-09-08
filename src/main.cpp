@@ -1374,7 +1374,7 @@ int handleCmdLine(bool has_server_config, bool has_parent_process)
 
     if (CommandLine::has("--network-item-debugging"))
         NetworkItemManager::m_network_item_debugging = true;
-    
+
     std::string server_password;
     if (CommandLine::has("--server-password", &s))
     {
@@ -1813,17 +1813,17 @@ int handleCmdLine(bool has_server_config, bool has_parent_process)
                 "is not a .replay file.", s.c_str());
         }
     }   // --benchmark-file
-    
+
     if(CommandLine::has("--unlock-all"))
     {
         UserConfigParams::m_unlock_everything = 2;
     } // --unlock-all
-    
+
     if(CommandLine::has("--no-unlock-all"))
     {
         UserConfigParams::m_unlock_everything = 0;
     } // --no-unlock-all
-    
+
     if(CommandLine::has("--profile-time",  &n))
     {
         Log::verbose("main", "Profiling: %d seconds.", n);
@@ -2022,6 +2022,7 @@ void initRest()
         addons_manager = new AddonsManager();
     }
 #endif
+
     Online::ProfileManager::create();
 
     // The request manager will start the login process in case of a saved
@@ -2262,7 +2263,7 @@ int main(int argc, char *argv[])
     std::thread debugThread = std::thread(debugLoop);
 #endif
 #endif
-  
+
     clearGlobalVariables();
     CommandLine::init(argc, argv);
 
