@@ -58,6 +58,9 @@ private:
     // ----------------------------------------------------------------------------
     /** Update sound effect upon ghost replay data */
     void          updateSound(float dt);
+    // ----------------------------------------------------------------------------
+    /** Check if replay control's pause is active */
+    bool          isReplayPaused() const;
 
 public:
                   GhostKart(const std::string& ident, unsigned int world_kart_id,

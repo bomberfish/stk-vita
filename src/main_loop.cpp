@@ -49,6 +49,7 @@
 #include "online/request_manager.hpp"
 #include "race/history.hpp"
 #include "race/race_manager.hpp"
+#include "replay/replay_control.hpp"
 #include "states_screens/dialogs/server_info_dialog.hpp"
 #include "states_screens/online/server_selection.hpp"
 #include "states_screens/main_menu_screen.hpp"
@@ -456,8 +457,15 @@ void MainLoop::run()
 
         PROFILER_PUSH_CPU_MARKER("Main loop", 0xFF, 0x00, 0xF7);
         TimePoint frame_start = std::chrono::steady_clock::now();
+        ReplayControl* rc = ReplayControl::get();
+        double elapsed_time = getLimitedDt();
 
-        left_over_time += getLimitedDt();
+        if (!RaceManager::get()->isWatchingReplay())
+            left_over_time += elapsed_time;
+        else if (rc->isPlaying())
+            left_over_time += elapsed_time*rc->getRate();
+        // In the paused watched replay case, there is nothing to do
+
         int num_steps   = stk_config->time2Ticks(left_over_time);
         float dt = stk_config->ticks2Time(1);
         left_over_time -= num_steps * dt;
@@ -562,6 +570,7 @@ void MainLoop::run()
         if (!m_abort)
         {
             float frame_duration = num_steps * dt;
+            float real_duration = (float)elapsed_time;
             if (!GUIEngine::isNoGraphics())
             {
                 PROFILER_PUSH_CPU_MARKER("Update race", 0, 255, 255);
@@ -571,12 +580,12 @@ void MainLoop::run()
 
                 // Render the previous frame, and also handle all user input.
                 PROFILER_PUSH_CPU_MARKER("IrrDriver update", 0x00, 0x00, 0x7F);
-                irr_driver->update(frame_duration);
+                irr_driver->update(real_duration);
                 PROFILER_POP_CPU_MARKER();
 
                 PROFILER_PUSH_CPU_MARKER("Input/GUI", 0x7F, 0x00, 0x00);
-                input_manager->update(frame_duration);
-                GUIEngine::update(frame_duration);
+                input_manager->update(real_duration);
+                GUIEngine::update(real_duration);
                 PROFILER_POP_CPU_MARKER();
                 if (!m_download_assets)
                 {
@@ -589,7 +598,7 @@ void MainLoop::run()
             if (!m_download_assets)
             {
                 PROFILER_PUSH_CPU_MARKER("Database polling update", 0x00, 0x7F, 0x7F);
-                Online::RequestManager::get()->update(frame_duration);
+                Online::RequestManager::get()->update(real_duration);
                 PROFILER_POP_CPU_MARKER();
             }
 

@@ -146,6 +146,10 @@ private:
     void drawGlobalMiniMap     ();
     void drawGlobalTimer       ();
     void drawLiveDifference    ();
+    void drawReplayMenu        ();
+
+    /** Helper function for drawing the replay control menu */
+    void drawReplayMenuLine    (const core::stringw& text, int y, int x, bool hcenter);
 
 public:
 

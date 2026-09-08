@@ -87,6 +87,14 @@ public:
     }
 
     // ------------------------------------------------------------------------
+    float        getLastTime() const
+    {
+        if (m_all_times.empty())
+            return 0.0f;
+        else
+            return m_all_times.back();
+    }
+    // ------------------------------------------------------------------------
     /** Return the display name; if not set, use default display name (kart name) */
     core::stringw getName(bool include_handicap_string = true) const OVERRIDE
     {

@@ -270,6 +270,7 @@ extern "C" {
 #include "race/highscore_manager.hpp"
 #include "race/history.hpp"
 #include "race/race_manager.hpp"
+#include "replay/replay_control.hpp"
 #include "replay/replay_play.hpp"
 #include "replay/replay_recorder.hpp"
 #include "states_screens/main_menu_screen.hpp"
@@ -2063,6 +2064,7 @@ void initRest()
     history                 = new History              ();
     ReplayPlay::create();
     ReplayRecorder::create();
+    ReplayControl::create();
     material_manager        = new MaterialManager      ();
     track_manager           = new TrackManager         ();
     kart_properties_manager = new KartPropertiesManager();
@@ -2813,6 +2815,7 @@ static void cleanSuperTuxKart()
     if(history)                 delete history;
     ReplayPlay::destroy();
     ReplayRecorder::destroy();
+    ReplayControl::destroy();
     delete ParticleKindManager::get();
     PlayerManager::destroy();
     if(unlock_manager)          delete unlock_manager;

@@ -20,6 +20,7 @@
 #include "karts/controller/ghost_controller.hpp"
 #include "karts/controller/kart_control.hpp"
 #include "modes/world.hpp"
+#include "replay/replay_control.hpp"
 
 GhostController::GhostController(Kart *kart, core::stringw display_name)
                 : Controller(kart)
@@ -38,6 +39,19 @@ void GhostController::reset()
 void GhostController::update(int ticks)
 {
     m_current_time = World::getWorld()->getTime();
+
+    // This has been done to make the class keep the promise that was
+    // documented in the ghost_controller header.
+    // Consequently, this allows for replay seeking to be implemented.
+    // It is safe because it only triggers when a backwards clock
+    // movement occurs, which is impossible in regular play as forward
+    // playback only ever increases the clock.
+    while (m_current_index > 0 &&
+           m_all_times[m_current_index] > m_current_time)
+    {
+        m_current_index--;
+    }
+
     // Find (if necessary) the next index to use
     if (m_current_time != 0.0f)
     {
@@ -89,5 +103,41 @@ bool GhostController::action(PlayerAction action, int value, bool dry_run)
         m_controls->setLookBack(value!=0);
     else if (action == PA_PAUSE_RACE)
         if (value != 0) StateManager::get()->escapePressed();
+
+    // Replay control input system
+    if (RaceManager::get()->isWatchingReplay() && value != 0)
+    {
+        // Variable declarations
+        ReplayControl* rc          =  ReplayControl::get();
+        double current_rate        =  rc->getRate();
+        const double RATE_VALUES[] =  { 0.1, 0.25,  0.5, 1.0, 2.0, 4.0 };
+        const int RATE_COUNT       =  sizeof(RATE_VALUES) / sizeof(RATE_VALUES[0]);
+
+        // Pause
+        if (action == PA_FIRE)
+            rc->setPlaying(!rc->isPlaying());
+
+        // Change rate
+        else if (action == PA_BRAKE)
+        {
+            int rate_index  = RATE_COUNT - 1;
+            while (rate_index > 0 &&
+                   RATE_VALUES[rate_index] >= current_rate)
+            {
+                rate_index--;
+            }
+            rc->setRate(RATE_VALUES[rate_index]);
+        }
+        else if (action == PA_ACCEL)
+        {
+            int rate_index  = 0;
+            while (rate_index < RATE_COUNT - 1 &&
+                   RATE_VALUES[rate_index] <= current_rate)
+            {
+                rate_index++;
+            }
+            rc->setRate(RATE_VALUES[rate_index]);
+        }
+    }
     return true;
 }   // action

@@ -40,6 +40,8 @@
 #include "items/item_manager.hpp"
 #include "karts/kart.hpp"
 #include "modes/world.hpp"
+#include "race/race_manager.hpp"
+#include "replay/replay_control.hpp"
 #include "scriptengine/script_engine.hpp"
 #include "tracks/check_cylinder.hpp"
 #include "tracks/check_manager.hpp"
@@ -157,6 +159,40 @@ void TrackObjectPresentationSceneNode::reset()
     m_node->setRotation(m_init_hpr);
     m_node->setScale(m_init_scale);
 }   // reset
+
+// ----------------------------------------------------------------------------
+void TrackObjectPresentationSceneNode::updateGraphics(float dt)
+{
+    // This function uses 25.0f as a hardcoded value. This is because it is the
+    // Irrlicht CAnimatedMeshSceneNode constructor's default (i.e. 25fps). Seeing as
+    // the inheritance line of setMesh is commented out, no track objects
+    // override it and therefore it's the speed each animated track object runs at.
+
+    if (m_node == NULL) return;
+    if (!RaceManager::get()->isWatchingReplay()) return;
+
+    double multiplier = 0;
+    if (ReplayControl::get()->isPlaying())
+        multiplier = ReplayControl::get()->getRate();
+    LODNode* ln = dynamic_cast<LODNode*>(m_node);
+    if (ln)
+    {
+        for (scene::ISceneNode* node : ln->getAllNodes())
+        {
+            scene::IAnimatedMeshSceneNode* a_node =
+                dynamic_cast<scene::IAnimatedMeshSceneNode*>(node);
+            if (a_node)
+                a_node->setAnimationSpeed(25.0f * multiplier);
+        }
+    }
+    else
+    {
+        scene::IAnimatedMeshSceneNode* a_node =
+            dynamic_cast<scene::IAnimatedMeshSceneNode*>(m_node);
+        if (a_node)
+            a_node->setAnimationSpeed(25.0f * multiplier);
+    }
+}   // updateGraphics
 
 // ----------------------------------------------------------------------------
 TrackObjectPresentationEmpty::TrackObjectPresentationEmpty(const XMLNode& xml_node)

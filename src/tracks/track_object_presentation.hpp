@@ -164,6 +164,7 @@ public:
         const core::vector3df& scale, bool isAbsoluteCoord) OVERRIDE;
     virtual void setEnable(bool enabled) OVERRIDE;
     virtual void reset() OVERRIDE;
+    virtual void updateGraphics(float dt) OVERRIDE;
 
     // ------------------------------------------------------------------------
     /** Returns a pointer to the scene node. */

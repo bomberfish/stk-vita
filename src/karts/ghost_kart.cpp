@@ -27,6 +27,8 @@
 #include "modes/easter_egg_hunt.hpp"
 #include "modes/linear_world.hpp"
 #include "modes/world.hpp"
+#include "race/race_manager.hpp"
+#include "replay/replay_control.hpp"
 #include "replay/replay_recorder.hpp"
 #include "tracks/terrain_info.hpp"
 #include "tracks/track.hpp"
@@ -102,7 +104,16 @@ void GhostKart::updateGraphics(float dt)
     Moveable::updateGraphics(center_shift, btQuaternion(0, 0, 0, 1));
     // Also update attachment's graphics
     m_attachment->updateGraphics(dt);
+    // Sets the kart's animation speed based on ReplayControl's rate
+    if (getKartModel()->getAnimatedNode() && RaceManager::get()->isWatchingReplay())
+    {
+        double multiplier = 0;
+        if (ReplayControl::get()->isPlaying())
+            multiplier = ReplayControl::get()->getRate();
 
+        getKartModel()->getAnimatedNode()->setAnimationSpeed(getKartModel()
+            ->getAnimationSpeed() * multiplier);
+    }
     updateSound(dt);
 }   // updateGraphics
 
@@ -136,6 +147,13 @@ void GhostKart::update(int ticks)
         if (idx == 1)
         {
             // Start showing the ghost when it start racing
+            m_node->setVisible(true);
+        }
+        else
+        {
+            // When a replay ends, the node is hidden and nothing in
+            // watch-replay mode restores it. GFX and sound recover
+            // by themselves so there's no need to restore them.
             m_node->setVisible(true);
         }
     }
@@ -223,11 +241,19 @@ void GhostKart::update(int ticks)
                          +  rd  *m_all_bonus_info[idx + 1].m_nitro_amount;
 
     // Graphical effects for nitro, zipper and skidding
-    getKartGFX()->setGFXFromReplay(m_all_replay_events[idx].m_nitro_usage,
-                                   m_all_replay_events[idx].m_zipper_usage,
-                                   m_all_replay_events[idx].m_skidding_effect,
-                                   m_all_replay_events[idx].m_red_skidding,
-                                   m_all_replay_events[idx].m_purple_skidding);
+    if (RaceManager::get()->isWatchingReplay() &&
+        !ReplayControl::get()->isPlaying())
+    {
+        getKartGFX()->setGFXFromReplay(false, false, false, false, false);
+    }
+    else
+    {
+        getKartGFX()->setGFXFromReplay(m_all_replay_events[idx].m_nitro_usage,
+                                       m_all_replay_events[idx].m_zipper_usage,
+                                       m_all_replay_events[idx].m_skidding_effect,
+                                       m_all_replay_events[idx].m_red_skidding,
+                                       m_all_replay_events[idx].m_purple_skidding);
+    }
     getKartGFX()->update(dt);
 
     m_speed = getSpeed();
@@ -267,7 +293,8 @@ void GhostKart::updateSound(float dt)
 
     if (m_nitro_sound)
     {
-        if(m_all_replay_events[idx].m_nitro_usage)
+        if(m_all_replay_events[idx].m_nitro_usage &&
+           !isReplayPaused())
         {
             if (m_nitro_sound->getStatus() != SFXBase::SFX_PLAYING)
             {
@@ -280,6 +307,14 @@ void GhostKart::updateSound(float dt)
         }
     }
 }
+
+// ----------------------------------------------------------------------------
+/** Checks to see if ReplayControl's pause is active. */
+bool GhostKart::isReplayPaused() const
+{
+    return RaceManager::get()->isWatchingReplay() &&
+           !ReplayControl::get()->isPlaying();
+}   // isReplayPaused
 
 // ----------------------------------------------------------------------------
 /** Returns the speed of the kart in meters/second. */
