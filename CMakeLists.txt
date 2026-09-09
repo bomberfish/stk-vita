@@ -145,7 +145,9 @@ set(STK_SOURCE_DIR "src")
 set(STK_DATA_DIR "${PROJECT_SOURCE_DIR}/data")
 
 # CMAKE_RUNTIME_OUTPUT_DIRECTORY removes dSYMs in Xcode archive
-if(NOT CMAKE_GENERATOR MATCHES "Xcode")
+# On Vita the executable has to stay in the top level binary dir: vitasdk's
+# vita_create_self() looks for it at ${CMAKE_CURRENT_BINARY_DIR}/<target>
+if(NOT CMAKE_GENERATOR MATCHES "Xcode" AND NOT VITA)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 endif()
 
@@ -924,6 +926,32 @@ if (VITA)
     SceSysmodule_stub
     SceTouch_stub
     m
+  )
+
+  # ==== VPK packaging ====
+  # Produces SuperTuxKart.vpk, installable with VitaShell on a modded Vita.
+  # Only the executable and the LiveArea assets go in the vpk; data/ (58M) and
+  # stk-assets (1.4G) are far too large to bundle and are read from
+  # ux0:data/stk/ at runtime instead. See vita/README.md.
+  if(NOT VITASDK)
+    set(VITASDK "$ENV{VITASDK}")
+  endif()
+  include("${VITASDK}/share/vita.cmake" REQUIRED)
+
+  set(VITA_TITLEID  "STKV00001")
+  set(VITA_APP_NAME "SuperTuxKart")
+  set(VITA_VERSION  "01.00")
+
+  # UNSAFE is required: the game reads and writes ux0:data/stk/, which is
+  # outside the sandbox a safe-mode homebrew is confined to.
+  vita_create_self(eboot.bin supertuxkart UNSAFE STRIPPED)
+  vita_create_vpk(SuperTuxKart.vpk ${VITA_TITLEID} eboot.bin
+    NAME    ${VITA_APP_NAME}
+    VERSION ${VITA_VERSION}
+    FILE    vita/sce_sys/icon0.png                        sce_sys/icon0.png
+    FILE    vita/sce_sys/livearea/contents/bg.png         sce_sys/livearea/contents/bg.png
+    FILE    vita/sce_sys/livearea/contents/startup.png    sce_sys/livearea/contents/startup.png
+    FILE    vita/sce_sys/livearea/contents/template.xml   sce_sys/livearea/contents/template.xml
   )
 endif()
 
