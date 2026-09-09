@@ -446,7 +446,7 @@ void MainLoop::run()
                 m_request_abort = true;
             }
         }
-#elif !defined( __SWITCH__ )
+#elif !defined( __SWITCH__ ) && !defined( VITA )
         // POSIX equivalent
         if (m_parent_pid != 0 && getppid() != (int)m_parent_pid)
         {

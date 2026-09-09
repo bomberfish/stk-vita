@@ -54,7 +54,7 @@
 #endif
 
 #include    "sys/types.h"
-#ifdef __SWITCH__
+#if defined(__SWITCH__) || defined(VITA)
 #define readlink(path,buf,length) 0
 #endif
 #include    "sys/stat.h"                        /* For stat()       */

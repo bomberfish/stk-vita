@@ -764,10 +764,8 @@ if (USE_SWITCH)
   )
 endif()
 
-if (VITA)
-  find_library(SCENETCTL_STUB_LIBRARY NAMES SceNetCtl_stub REQUIRED)
-  target_link_libraries(supertuxkart ${SCENETCTL_STUB_LIBRARY})
-endif()
+# Vita system libraries are linked at the very end of this file: the toolchain
+# linker is single-pass, so they have to follow every library that needs them
 
 if(NOT SERVER_ONLY)
     if (USE_MOJOAL)
@@ -887,6 +885,46 @@ if(USE_WIIUSE)
     endif()
     add_definitions(-DENABLE_WIIUSE)
 
+endif()
+
+# ==== PS Vita system libraries ====
+# Must come after every other target_link_libraries() call: the Vita toolchain
+# uses a single-pass static linker, so a library has to appear after everything
+# that references it. OpenGL is provided by vitaGL, which the SDL2 build (the
+# Northfear/SDL vitagl fork) uses for its video backend and for SDL_GL_*; the
+# list below mirrors the EXTRA_LIBS that SDL's own configure step reports.
+if (VITA)
+  target_link_libraries(supertuxkart
+    # OpenGL implementation and its runtime shader compiler
+    vitaGL
+    vitashark
+    SceShaccCgExt
+    SceShaccCg_stub
+    taihen_stub
+    SceKernelModuleMgr_stub
+    mathneon
+    # Vita system modules
+    SceAppMgr_stub
+    SceAppUtil_stub
+    SceAudio_stub
+    SceAudioIn_stub
+    SceCommonDialog_stub
+    SceCtrl_stub
+    SceDisplay_stub
+    SceGxm_stub
+    SceHid_stub
+    SceIme_stub
+    SceIofilemgr_stub
+    SceKernelDmacMgr_stub
+    SceMotion_stub
+    SceNet_stub
+    SceNetCtl_stub
+    ScePower_stub
+    SceProcessmgr_stub
+    SceSysmodule_stub
+    SceTouch_stub
+    m
+  )
 endif()
 
 if(MSVC OR MINGW)
