@@ -929,6 +929,8 @@ if (VITA)
     m
   )
 
+  target_link_options(supertuxkart PRIVATE "-Wl,-u,pthread_cancel") # threading fix
+
   # ==== VPK packaging ====
   # Produces SuperTuxKart.vpk, installable with VitaShell on a modded Vita.
   # Only the executable and the LiveArea assets go in the vpk; data/ (58M) and
