@@ -20,7 +20,7 @@
 
 #include "irrString.h"
 
-#ifndef IOS_STK
+#if !defined(IOS_STK) && !defined(VITA)
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <EGL/egl.h>
@@ -782,4 +782,3 @@ bool checkOGLES2FBOStatus(COGLES2Driver* Driver)
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_OGLES2_
-

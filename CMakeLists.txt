@@ -84,6 +84,7 @@ if(VITA)
   # ADD_DEFINITIONS(-DMOBILE_STK)
   ADD_DEFINITIONS(-DVITA_STK)
   ADD_DEFINITIONS(-DVITA)
+  option(USE_GLES2 "Use OpenGL ES2 renderer" ON)
   set(NO_SHADERC ON CACHE BOOL "Disable shaderc for Vita" FORCE) # no vulkan!!
   include(FindPkgConfig)
 endif()
