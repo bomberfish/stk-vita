@@ -1210,6 +1210,8 @@ void FileManager::checkAndCreateReplayDir()
 #elif defined(__APPLE__)
     m_replay_dir  = getenv("HOME");
     m_replay_dir += "/Library/Application Support/SuperTuxKart/replay/";
+#elif defined(VITA)
+    m_replay_dir  = "ux0:data/stk/replay/";
 #else
     m_replay_dir = checkAndCreateLinuxDir("XDG_DATA_HOME", "supertuxkart",
                                           ".local/share", ".supertuxkart");
@@ -1236,6 +1238,8 @@ void FileManager::checkAndCreateCachedTexturesDir()
 #elif defined(__APPLE__)
     m_cached_textures_dir = getenv("HOME");
     m_cached_textures_dir += "/Library/Application Support/SuperTuxKart/CachedTextures/";
+#elif defined(VITA)
+    m_cached_textures_dir = "ux0:data/stk/cached-textures/";
 #else
     m_cached_textures_dir = checkAndCreateLinuxDir("XDG_CACHE_HOME", "supertuxkart", ".cache/", ".");
     m_cached_textures_dir += "cached-textures/";
