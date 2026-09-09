@@ -43,4 +43,10 @@
   <card contains="PowerVR SGX 535" disable="NpotTextures"/>
   <card contains="PowerVR SGX 540" disable="NpotTextures"/>
   <card contains="PowerVR SGX 545" disable="NpotTextures"/>
+  <card os="vita" disable="HighDefinitionTextures256"/>
+  <card os="vita" disable="AdvancedPipeline"/>
+  <card os="vita" disable="GI"/>
+  <card os="vita" disable="ColorBufferFloat"/>
+  <card os="vita" disable="TextureBufferObject"/>
+  <card os="vita" disable="HardwareSkinning"/>
 </graphical-restrictions>

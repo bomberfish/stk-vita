@@ -314,18 +314,18 @@ void IrrDriver::updateConfigIfRelevant()
     {
         int x = 0;
         int y = 0;
-        
+
         bool success = m_device->getWindowPosition(&x, &y);
-        
+
         if (!success)
         {
             Log::warn("irr_driver", "Could not retrieve window location");
             return;
         }
-        
+
         Log::verbose("irr_driver", "Retrieved window location for config: "
                                    "%i %i", x, y);
-                                   
+
         // If the windows position is saved, it must be a non-negative
         // number. So if the window is partly off screen, move it to the
         // corresponding edge.
@@ -715,8 +715,8 @@ begin:
     }
 #endif
 
-    // Don't recreate on switch!
-#if !defined(SERVER_ONLY) && !defined(__SWITCH__)
+    // Don't recreate on switch or vita!
+#if !defined(SERVER_ONLY) && !defined(__SWITCH__) && !defined(VITA)
     if (!GUIEngine::isNoGraphics() && recreate_device)
     {
         m_device->closeDevice();
@@ -979,7 +979,7 @@ void IrrDriver::getOpenGLData(std::string *vendor, std::string *renderer,
 #ifndef SERVER_ONLY
     if (GUIEngine::isNoGraphics())
         return;
-        
+
     *vendor   = (char*)glGetString(GL_VENDOR  );
     *renderer = (char*)glGetString(GL_RENDERER);
     *version  = (char*)glGetString(GL_VERSION );
@@ -1039,7 +1039,7 @@ bool IrrDriver::moveWindow(int x, int y)
 {
 #ifndef SERVER_ONLY
     bool success = m_device->moveWindow(x, y);
-    
+
     if (!success)
     {
         Log::warn("irr_driver", "Could not set window location\n");

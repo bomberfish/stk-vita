@@ -38,4 +38,9 @@ extern "C" double roundeven(double x)
     return rint(x);
 }   // roundeven
 
+// alloc a larger heap than the default
+extern "C" {
+    unsigned int _newlib_heap_size_user = 192 * 1024 * 1024;   // 192 MiB
+}
+
 #endif   // VITA
