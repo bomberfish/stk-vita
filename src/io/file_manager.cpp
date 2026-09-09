@@ -187,6 +187,10 @@ FileManager::FileManager()
     else if(fileExists("romfs:/data/", version))
         root_dir = "romfs:/data/";
 #endif
+#ifdef VITA
+    else if(fileExists("ux0:data/stk/data/", version))
+        root_dir = "ux0:data/stk/data/";
+#endif
     else if(fileExists("./data/", version))
         root_dir = "./data/" ;
     else if(fileExists("../data/", version))
@@ -238,6 +242,13 @@ FileManager::FileManager()
 #endif
 
 #else
+#ifdef VITA
+    if (fileExists("ux0:data/stk/stk-assets/"))
+    {
+        assets_dir = "ux0:data/stk/stk-assets";
+    }
+    else
+#endif
     if (getenv("SUPERTUXKART_ASSETS_DIR") != NULL)
     {
         assets_dir = std::string(getenv("SUPERTUXKART_ASSETS_DIR"));
@@ -1044,6 +1055,8 @@ void FileManager::checkAndCreateConfigDir()
         const std::string CONFIGDIR("SuperTuxKart");
         m_user_config_dir += CONFIGDIR;
 
+#elif defined(VITA)
+        m_user_config_dir = "ux0:data/stk/save";
 #elif defined(__HAIKU__)
 
         BPath settings_dir;
@@ -1130,6 +1143,8 @@ void FileManager::checkAndCreateAddonsDir()
     m_addons_dir += "/Library/Application Support/SuperTuxKart/Addons/";
 #elif defined(__HAIKU__)
     m_addons_dir  = m_user_config_dir+"addons/";
+#elif defined(VITA)
+    m_addons_dir  = "ux0:data/stk/addons/";
 #else
     m_addons_dir = checkAndCreateLinuxDir("XDG_DATA_HOME", "supertuxkart",
                                           ".local/share", ".stkaddons");
@@ -1167,6 +1182,8 @@ void FileManager::checkAndCreateScreenshotDir()
 #elif defined(__APPLE__)
     m_screenshot_dir  = getenv("HOME");
     m_screenshot_dir += "/Library/Application Support/SuperTuxKart/Screenshots/";
+#elif defined(VITA)
+    m_screenshot_dir  = "ux0:data/stk/screenshots/";
 #else
     m_screenshot_dir  = checkAndCreateLinuxDir("XDG_DATA_HOME", "supertuxkart",
                                           ".local/share", ".stkscreenshots");
@@ -1244,6 +1261,8 @@ void FileManager::checkAndCreateGPDir()
 #elif defined(__APPLE__)
     m_gp_dir  = getenv("HOME");
     m_gp_dir += "/Library/Application Support/SuperTuxKart/grandprix/";
+#elif defined(VITA)
+    m_gp_dir  = "ux0:data/stk/grandprix/";
 #else
     m_gp_dir = checkAndCreateLinuxDir("XDG_DATA_HOME", "supertuxkart",
                                           ".local/share", ".supertuxkart");

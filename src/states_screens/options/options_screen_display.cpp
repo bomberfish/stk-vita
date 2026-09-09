@@ -1,4 +1,4 @@
- 
+
 //  SuperTuxKart - a fun racing game with go-kart
 //  Copyright (C) 2009-2015 Marianne Gagnon
 //
@@ -103,7 +103,7 @@ void OptionsScreenDisplay::init()
     CheckBoxWidget* full = getWidget<CheckBoxWidget>("fullscreen");
     assert( full != NULL );
     full->setState( UserConfigParams::m_fullscreen );
-    
+
     CheckBoxWidget* rememberWinpos = getWidget<CheckBoxWidget>("rememberWinpos");
     assert( rememberWinpos != NULL );
     rememberWinpos->setState(UserConfigParams::m_remember_window_location);
@@ -138,7 +138,7 @@ void OptionsScreenDisplay::init()
     applyBtn->setActive(!in_game);
     OptionsCommon::updatePauseTooltip(applyBtn, in_game);
 
-#if defined(MOBILE_STK) || defined(__SWITCH__)
+#if defined(MOBILE_STK) || defined(__SWITCH__) || defined(VITA)
     applyBtn->setVisible(false);
     full->setVisible(false);
     getWidget<LabelWidget>("fullscreenText")->setVisible(false);
@@ -344,18 +344,18 @@ void OptionsScreenDisplay::updateResolutionsList()
     CheckBoxWidget* full = getWidget<CheckBoxWidget>("fullscreen");
     assert(full != NULL);
     bool fullscreen_selected = full->getState();
-    
+
     for (auto resolution : m_resolutions)
     {
         DynamicRibbonWidget* drw = getWidget<DynamicRibbonWidget>("resolutions");
         assert(drw != NULL);
         assert(drw->m_rows.size() == 1);
-        
+
         char name[128];
         snprintf(name, 128, "%ix%i", resolution.width, resolution.height);
-        
+
         Widget* w = drw->m_rows[0].findWidgetNamed(name);
-        
+
         if (w != NULL)
         {
             bool active = !fullscreen_selected || resolution.fullscreen;
@@ -397,10 +397,10 @@ void OptionsScreenDisplay::eventCallback(Widget* widget, const std::string& name
         DynamicRibbonWidget* w1=getWidget<DynamicRibbonWidget>("resolutions");
         assert(w1 != NULL);
         assert(w1->m_rows.size() == 1);
-        
+
         int index = w1->m_rows[0].getSelection(PLAYER_ID_GAME_MASTER);
         Widget* selected_widget = &w1->m_rows[0].getChildren()[index];
-        
+
         if (!selected_widget->isActivated())
             return;
 

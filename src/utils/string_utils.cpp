@@ -347,6 +347,14 @@ namespace StringUtils
     {
         try
         {
+#ifdef VITA
+            std::string dir = path;
+            while (dir.size() >= 1 && dir[dir.size() - 1] == '/')
+                dir.erase(dir.size() - 1);
+            if (dir.empty())
+                return std::vector<std::string>();
+            return std::vector<std::string>(1, dir);
+#else
             std::vector<std::string> dirs=StringUtils::split(path,':');
             for(int i=(int)dirs.size()-1; i>=0; i--)
             {
@@ -380,6 +388,7 @@ namespace StringUtils
             }   // for i
 #endif
             return dirs;
+#endif
         }
         catch (std::exception& e)
         {
