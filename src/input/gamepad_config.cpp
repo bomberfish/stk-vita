@@ -32,6 +32,11 @@
 #include "input/sdl_controller.hpp"
 #include <array>
 
+#ifdef VITA
+#include <psp2/apputil.h>
+#include <psp2/system_param.h>
+#endif
+
 enum AxisWithDirection : unsigned
 {
     SDL_CONTROLLER_AXIS_LEFTX_RIGHT = SDL_CONTROLLER_BUTTON_MAX,
@@ -496,10 +501,17 @@ void GamepadConfig::initSDLMapping()
         setBindingFromTuple(PA_STEER_RIGHT, actions_map.at(SDL_CONTROLLER_AXIS_LEFTX_RIGHT));
         setBindingFromTuple(PA_ACCEL, actions_map.at(SDL_CONTROLLER_AXIS_LEFTY_UP));
         setBindingFromTuple(PA_BRAKE, actions_map.at(SDL_CONTROLLER_AXIS_LEFTY_DOWN));
+#ifdef VITA
+        setBindingFromTuple(PA_MENU_UP, actions_map.at(SDL_CONTROLLER_BUTTON_DPAD_UP));
+        setBindingFromTuple(PA_MENU_DOWN, actions_map.at(SDL_CONTROLLER_BUTTON_DPAD_DOWN));
+        setBindingFromTuple(PA_MENU_LEFT, actions_map.at(SDL_CONTROLLER_BUTTON_DPAD_LEFT));
+        setBindingFromTuple(PA_MENU_RIGHT, actions_map.at(SDL_CONTROLLER_BUTTON_DPAD_RIGHT));
+#else
         setBindingFromTuple(PA_MENU_UP, actions_map.at(SDL_CONTROLLER_AXIS_LEFTY_UP));
         setBindingFromTuple(PA_MENU_DOWN, actions_map.at(SDL_CONTROLLER_AXIS_LEFTY_DOWN));
         setBindingFromTuple(PA_MENU_LEFT, actions_map.at(SDL_CONTROLLER_AXIS_LEFTX_LEFT));
         setBindingFromTuple(PA_MENU_RIGHT, actions_map.at(SDL_CONTROLLER_AXIS_LEFTX_RIGHT));
+#endif
     }
     else
     {
@@ -547,8 +559,25 @@ void GamepadConfig::initSDLMapping()
         setBindingFromTuple(PA_NITRO, actions_map.at(SDL_CONTROLLER_BUTTON_LEFTSHOULDER));
         setBindingFromTuple(PA_DRIFT, actions_map.at(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER));
         setBindingFromTuple(PA_PAUSE_RACE, actions_map.at(SDL_CONTROLLER_BUTTON_START));
+#ifdef VITA
+        int enter_btn;
+        sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_ENTER_BUTTON, &enter_btn);
+
+        // set default menu confirm/cancel binds based on system configuration
+        if (enter_btn == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
+        {
+            setBindingFromTuple(PA_MENU_SELECT, actions_map.at(SDL_CONTROLLER_BUTTON_B));
+            setBindingFromTuple(PA_MENU_CANCEL, actions_map.at(SDL_CONTROLLER_BUTTON_A));
+        }
+        else
+        {
+            setBindingFromTuple(PA_MENU_SELECT, actions_map.at(SDL_CONTROLLER_BUTTON_A));
+            setBindingFromTuple(PA_MENU_CANCEL, actions_map.at(SDL_CONTROLLER_BUTTON_B));
+        }
+#else
         setBindingFromTuple(PA_MENU_SELECT, actions_map.at(SDL_CONTROLLER_BUTTON_A));
         setBindingFromTuple(PA_MENU_CANCEL, actions_map.at(SDL_CONTROLLER_BUTTON_B));
+#endif
     }
     else
     {
