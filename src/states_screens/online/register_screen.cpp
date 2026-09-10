@@ -50,6 +50,11 @@ extern "C" {
 }
 #endif
 
+#ifdef VITA
+#include <psp2/apputil.h>
+#include <psp2/system_param.h>
+#endif
+
 using namespace GUIEngine;
 using namespace Online;
 using namespace irr;
@@ -119,6 +124,11 @@ void RegisterScreen::init()
         DWORD length = GetEnvironmentVariable(L"USERNAME", env.data(), 32767);
         if (length != 0)
             username = env.data();
+#elif defined(VITA)
+       // TODO: SCE_SYSTEM_PARAM_ID_USERNAME
+       char nametemp[SCE_SYSTEM_PARAM_USERNAME_MAXSIZE];
+       sceAppUtilSystemParamGetString(SCE_SYSTEM_PARAM_ID_USERNAME, (SceChar8*)nametemp, SCE_SYSTEM_PARAM_USERNAME_MAXSIZE);
+       username = nametemp;
 #elif defined(__SWITCH__)
         AccountUid uid;
         // It's possible the user is using an app that doesn't need a user selection
@@ -301,7 +311,7 @@ void RegisterScreen::doRegister()
 {
     stringw local_name = getWidget<TextBoxWidget>("local_username")
                        ->getText().trim();
-                       
+
     if (local_name.empty())
     {
         m_info_widget->setErrorColor();
@@ -405,7 +415,7 @@ void RegisterScreen::doRegister()
     {
         m_info_widget->setText(_("The email address is invalid!"), false);
     }
-   
+
     else
     {
         m_info_widget->setDefaultColor();
@@ -575,4 +585,3 @@ bool RegisterScreen::onEscapePressed()
     }
     return true;
 }   // onEscapePressed
-

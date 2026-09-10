@@ -166,6 +166,11 @@
 #include <jni.h>
 #endif
 
+#ifdef VITA
+#include <psp2/power.h>
+#include <psp2/apputil.h>
+#endif
+
 #ifdef __SWITCH__
 extern "C" {
   #include <sys/iosupport.h>
@@ -2264,6 +2269,24 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
+#ifdef VITA
+    // boost gpu clocks
+    scePowerSetConfigurationMode(0x00010880U); // SCE_POWER_CONFIGURATION_MODE_C
+    scePowerSetGpuClockFrequency(166);
+    scePowerSetBusClockFrequency(222);
+    scePowerSetGpuXbarClockFrequency(166);
+
+    // temp boost cpu clock during load
+    scePowerSetArmClockFrequency(444);
+
+    // init sceapputil
+    SceAppUtilInitParam init_param;
+    SceAppUtilBootParam boot_param;
+    memset(&init_param, 0, sizeof(SceAppUtilInitParam));
+    memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
+    sceAppUtilInit(&init_param, &boot_param);
+#endif
+
     clearGlobalVariables();
     CommandLine::init(argc, argv);
 
@@ -2663,6 +2686,11 @@ int main(int argc, char *argv[])
         appletSetCpuBoostMode(ApmCpuBoostMode_Normal);
 #endif
 
+#ifdef VITA
+        // Game loaded, bring CPU clock back to normal
+        scePowerSetArmClockFrequency(333);
+#endif
+
         main_loop->run();
 
     }  // try
@@ -2725,6 +2753,11 @@ int main(int argc, char *argv[])
     setExit();
     socketExit();
     nifmExit();
+#endif
+
+#ifdef VITA
+    //deinit whatever we started earlier
+    sceAppUtilShutdown();
 #endif
 
 #ifdef IOS_STK
