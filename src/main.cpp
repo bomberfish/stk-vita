@@ -196,6 +196,7 @@ extern "C" {
 #include <cstdio>
 #include <string>
 #include <cstring>
+#include <vector>
 #include <sstream>
 #include <algorithm>
 #include <limits>
@@ -300,6 +301,10 @@ extern "C" {
 #include "io/rich_presence.hpp"
 
 #include <IrrlichtDevice.h>
+
+#ifndef SERVER_ONLY
+#include <ge_main.hpp>
+#endif
 
 static void cleanSuperTuxKart();
 static void cleanUserConfig();
@@ -734,7 +739,8 @@ void cmdLineHelp()
     "       --geometry-level=n  Sets the LoD distances. Supported values range from 0 to 5.\n"
     "       --rtt-scale=n       Sets the render resolution as a percentage of the base resolution.\n"
     "                           Only works if dynamic lights are active."
-    "       --render-driver=n   Render driver to use (gl or directx9).\n"
+    "       --render-driver=n   Render driver to use (opengl, vulkan, gxm or\n"
+    "                           directx9, depending on the platform).\n"
     "       --disable-addon-karts Disable loading of addon karts.\n"
     "       --disable-addon-tracks Disable loading of addon tracks.\n"
     "       --dump-official-karts Dump official karts for current stk-assets.\n"
@@ -963,6 +969,7 @@ int handleCmdLinePreliminary()
         else
         {
             if ((strcmp(UserConfigParams::m_render_driver.c_str(), "vulkan")   == 0 && n >= 4) ||
+                (strcmp(UserConfigParams::m_render_driver.c_str(), "gxm")      == 0 && n >= 4) ||
                 (strcmp(UserConfigParams::m_render_driver.c_str(), "directx9") == 0 && n >= 3))
             {
                 Log::warn("main", "Some settings of the selected preset (%i) are not "
@@ -970,8 +977,12 @@ int handleCmdLinePreliminary()
             }
 
             // Apply the chosen graphical presets
-            if (strcmp(UserConfigParams::m_render_driver.c_str(), "vulkan") == 0 && n <= 2)
-                Log::error("main", "The vulkan renderer does not support the very low presets!");
+            if ((strcmp(UserConfigParams::m_render_driver.c_str(), "vulkan") == 0 ||
+                strcmp(UserConfigParams::m_render_driver.c_str(), "gxm") == 0) && n <= 2)
+            {
+                Log::error("main", "The %s renderer does not support the very low "
+                    "presets!", UserConfigParams::m_render_driver.c_str());
+            }
             else if (UserConfigParams::m_force_legacy_device)
                 Log::error("main", "The legacy renderer cannot use any of the gfx presets!");
             else
@@ -2288,6 +2299,45 @@ int main(int argc, char *argv[])
 #endif
 
     clearGlobalVariables();
+
+#ifdef VITA
+    // A Vita application is started by the shell, not from a command line, so
+    // argv only ever holds the path to the eboot: there is no way to ask STK
+    // for a particular track, a different stk_config or extra logging without
+    // rebuilding it. Anything in this file is appended to the real argument
+    // list, one option per whitespace separated token, '#' to end of line
+    // ignored. Missing file means no extra arguments, which is the normal case.
+    //
+    // These have to outlive CommandLine, which keeps the pointers rather than
+    // copying the strings, so they are declared in main's own scope.
+    static std::vector<std::string> vita_args;
+    static std::vector<char*> vita_argv;
+    if (FILE* args_file = fopen("ux0:data/stk/args.txt", "r"))
+    {
+        char buf[512];
+        while (fgets(buf, sizeof(buf), args_file) != NULL)
+        {
+            char* comment = strchr(buf, '#');
+            if (comment != NULL)
+                *comment = '\0';
+            for (char* token = strtok(buf, " \t\r\n"); token != NULL;
+                token = strtok(NULL, " \t\r\n"))
+            {
+                vita_args.push_back(token);
+            }
+        }
+        fclose(args_file);
+    }
+    if (!vita_args.empty())
+    {
+        vita_argv.assign(argv, argv + argc);
+        for (std::string& arg : vita_args)
+            vita_argv.push_back(&arg[0]);
+        argc = (int)vita_argv.size();
+        argv = vita_argv.data();
+    }
+#endif
+
     CommandLine::init(argc, argv);
 
     CrashReporting::installHandlers();
@@ -2546,7 +2596,8 @@ int main(int argc, char *argv[])
                 }
                 Log::warn("OpenGL", "Driver is too old!");
             }
-            else if (!CVS->isGLSL() && irr_driver->getVideoDriver()->getDriverType() != video::EDT_VULKAN)
+            else if (!CVS->isGLSL() &&
+                !GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
             {
                 #if !defined(MOBILE_STK)
                 if (UserConfigParams::m_old_driver_popup)

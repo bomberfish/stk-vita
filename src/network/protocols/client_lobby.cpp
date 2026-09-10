@@ -1889,6 +1889,11 @@ void ClientLobby::handleClientCommand(const std::string& cmd)
         UserConfigParams::m_render_driver = "vulkan";
         user_config->saveConfig();
     }
+    else if (argv[0] == "gxm")
+    {
+        UserConfigParams::m_render_driver = "gxm";
+        user_config->saveConfig();
+    }
     else
     {
         // Send for server command

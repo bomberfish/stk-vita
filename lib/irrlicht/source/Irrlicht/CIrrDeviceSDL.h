@@ -329,7 +329,7 @@ class MoltenVK;
 #ifdef DLOPEN_MOLTENVK
 		MoltenVK* m_moltenvk;
 #endif
-		void createGUIAndVulkanScene();
+		void createGUIAndGEScene();
 		const core::dimension2du& getRealScreenSize() const;
 	};
 

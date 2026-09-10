@@ -380,7 +380,7 @@ void STKTextBillboard::initLegacy(const core::stringw& text, FontWithFace* face)
         irr_tbs[(*m_chars)[i].m_texture].push_back(triangle);
     }
 
-    if (SceneManager->getVideoDriver()->getDriverType() == video::EDT_VULKAN)
+    if (GE::isGEDriverType(SceneManager->getVideoDriver()->getDriverType()))
     {
         GE::GESPM* spm = new GE::GESPM();
         for (auto& p : irr_tbs)

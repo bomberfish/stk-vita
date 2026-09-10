@@ -576,7 +576,7 @@ void Material::install(std::function<void(video::IImage*)> image_mani,
     m_texture->grab();
 
 #ifndef SERVER_ONLY
-    if (irr_driver->getVideoDriver()->getDriverType() != EDT_VULKAN)
+    if (!GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
         return;
 
     for (unsigned i = 2; i < m_sampler_path.size(); i++)
@@ -635,7 +635,7 @@ void Material::unloadTexture()
     }
 
 #ifndef SERVER_ONLY
-    if (irr_driver->getVideoDriver()->getDriverType() == EDT_VULKAN)
+    if (GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
     {
         for (unsigned i = 2; i < m_sampler_path.size(); i++)
         {
@@ -837,7 +837,8 @@ void  Material::setMaterialProperties(video::SMaterial *m, scene::IMeshBuffer* m
     }
 
     m->setColorizable(m_colorizable);
-    bool is_vk = irr_driver->getVideoDriver()->getDriverType() == EDT_VULKAN;
+    bool is_ge = GE::isGEDriverType(
+        irr_driver->getVideoDriver()->getDriverType());
     // Default solid
     m->MaterialType = video::EMT_SOLID;
     if (RaceManager::get()->getReverseTrack() &&
@@ -873,7 +874,7 @@ void  Material::setMaterialProperties(video::SMaterial *m, scene::IMeshBuffer* m
                 }
             }
 #ifndef SERVER_ONLY
-            if (is_vk)
+            if (is_ge)
             {
                 GE::GESPMBuffer* spmb = static_cast<GE::GESPMBuffer*>(mb);
                 spmb->destroyVertexIndexBuffer();
@@ -1001,7 +1002,7 @@ void  Material::setMaterialProperties(video::SMaterial *m, scene::IMeshBuffer* m
     }
 #endif
 #ifndef SERVER_ONLY
-    if (is_vk)
+    if (is_ge)
     {
         m->MaterialType =
             GE::GEMaterialManager::getIrrMaterialType(m_shader_name);

@@ -33,6 +33,10 @@
 #include "utils/log.hpp"
 #include "utils/string_utils.hpp"
 
+#ifndef SERVER_ONLY
+#include <ge_main.hpp>
+#endif
+
 #include <ISceneManager.h>
 #include <ILightSceneNode.h>
 #include <ITexture.h>
@@ -172,7 +176,7 @@ Referee::Referee()
                                m_st_last_start_frame);
 #ifndef SERVER_ONLY
     if ((CVS->isGLSL() && CVS->isDeferredEnabled()) ||
-        irr_driver->getVideoDriver()->getDriverType() == video::EDT_VULKAN)
+        GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
     {
         m_light = irr_driver->addLight(core::vector3df(0.0f, 0.0f, 0.6f), 0.7f, 2.0f,
             0.7f /* r */, 0.0 /* g */, 0.0f /* b */, false /* sun */, m_scene_node);

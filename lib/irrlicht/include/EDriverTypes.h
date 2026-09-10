@@ -59,6 +59,12 @@ namespace video
 		//! A driver using vulkan coded by STK
 		EDT_VULKAN,
 
+		//! A driver talking to the PlayStation Vita GPU through SceGxm,
+		//! coded by STK. Shares the graphics_engine scene graph with the
+		//! vulkan driver, but has its own forward renderer suited to a
+		//! tile based deferred GPU with no multiple render target support.
+		EDT_GXM,
+
 		//! No driver, just for counting the elements
 		EDT_COUNT
 	};

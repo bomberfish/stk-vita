@@ -24,6 +24,10 @@
 #include "graphics/rtts.hpp"
 #include "graphics/shader_based_renderer.hpp"
 
+#ifndef SERVER_ONLY
+#include <ge_main.hpp>
+#endif
+
 #include <ISceneManager.h>
 #include <IVideoDriver.h>
 
@@ -52,7 +56,7 @@ GL1RenderTarget::GL1RenderTarget(const irr::core::dimension2du &dimension,
 GL1RenderTarget::~GL1RenderTarget()
 {
     // GE doesn't add rtt texture to cache
-    if (m_render_target_texture->getDriverType() == video::EDT_VULKAN)
+    if (GE::isGEDriverType(m_render_target_texture->getDriverType()))
         m_render_target_texture->drop();
 }
 

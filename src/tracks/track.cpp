@@ -1354,7 +1354,7 @@ bool Track::loadMainTrack(const XMLNode &root)
     handleAnimatedTextures(scene_node, *track_node);
 #ifndef SERVER_ONLY
     if (!GUIEngine::isNoGraphics() &&
-        GE::getDriver()->getDriverType() == video::EDT_VULKAN)
+        GE::isGEDriverType(GE::getDriver()->getDriverType()))
     {
         std::vector<std::array<btVector3, 3> > tris;
         convertTrackToBullet(scene_node, &tris);

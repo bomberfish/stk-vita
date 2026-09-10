@@ -102,6 +102,26 @@ set(GE_SOURCES
     src/ge_spm_buffer.cpp
 )
 
+# The SceGxm backend only exists on the Vita, where libgxm is the only way to
+# reach the GPU without going through a GL translation layer.
+if(VITA)
+    set(GE_SOURCES ${GE_SOURCES}
+        src/ge_gxm_2d_renderer.cpp
+        src/ge_gxm_camera_scene_node.cpp
+        src/ge_gxm_draw_call.cpp
+        src/ge_gxm_driver.cpp
+        src/ge_gxm_environment_map.cpp
+        src/ge_gxm_memory.cpp
+        src/ge_gxm_mesh_cache.cpp
+        src/ge_gxm_post_processing.cpp
+        src/ge_gxm_render_target.cpp
+        src/ge_gxm_scene_manager.cpp
+        src/ge_gxm_shader.cpp
+        src/ge_gxm_shader_sources.cpp
+        src/ge_gxm_texture.cpp
+    )
+endif()
+
 if(NOT APPLE OR DLOPEN_MOLTENVK)
     set(GE_SOURCES ${GE_SOURCES} src/vulkan.c)
 endif()

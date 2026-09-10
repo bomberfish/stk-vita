@@ -104,7 +104,7 @@ void Graph::createDebugMesh()
 #endif
 
 #ifndef SERVER_ONLY
-    bool vk = (GE::getVKDriver() != NULL);
+    bool vk = (GE::isGERenderer());
     if (vk)
         GE::getGEConfig()->m_convert_irrlicht_mesh = true;
 #endif
@@ -486,7 +486,7 @@ RenderTarget* Graph::makeMiniMap(const core::dimension2du &dimension,
 #endif
 
 #ifndef SERVER_ONLY
-    bool vk = (GE::getVKDriver() != NULL);
+    bool vk = (GE::isGERenderer());
     if (vk)
         GE::getGEConfig()->m_convert_irrlicht_mesh = true;
 #endif

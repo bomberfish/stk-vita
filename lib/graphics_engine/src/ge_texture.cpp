@@ -2,6 +2,9 @@
 #include "ge_dx9_texture.hpp"
 #include "ge_gl_texture.hpp"
 #include "ge_vulkan_texture.hpp"
+#ifdef _IRR_COMPILE_WITH_GXM_
+#include "ge_gxm_texture.hpp"
+#endif
 #include "ge_texture.hpp"
 
 #include <IFileSystem.h>
@@ -105,6 +108,10 @@ irr::video::ITexture* createTexture(const std::string& path,
 #endif
     case video::EDT_VULKAN:
         return new GEVulkanTexture(path, image_mani);
+#ifdef _IRR_COMPILE_WITH_GXM_
+    case video::EDT_GXM:
+        return new GEGXMTexture(path, image_mani);
+#endif
     default:
         return NULL;
     }
@@ -125,6 +132,10 @@ irr::video::ITexture* createTexture(video::IImage* img,
 #endif
     case video::EDT_VULKAN:
         return new GEVulkanTexture(img, name);
+#ifdef _IRR_COMPILE_WITH_GXM_
+    case video::EDT_GXM:
+        return new GEGXMTexture(img, name);
+#endif
     default:
         return NULL;
     }
@@ -145,6 +156,10 @@ irr::video::ITexture* createFontTexture(const std::string& name,
 #endif
     case video::EDT_VULKAN:
         return new GEVulkanTexture(name, size, single_channel);
+#ifdef _IRR_COMPILE_WITH_GXM_
+    case video::EDT_GXM:
+        return new GEGXMTexture(name, size, single_channel);
+#endif
     default:
         return NULL;
     }

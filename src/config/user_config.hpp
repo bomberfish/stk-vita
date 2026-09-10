@@ -718,11 +718,18 @@ namespace UserConfigParams
 #if defined(_IRR_COMPILE_WITH_DIRECT3D_9_) && defined(_M_ARM)
     PARAM_PREFIX StringUserConfigParam         m_render_driver
         PARAM_DEFAULT(  StringUserConfigParam("directx9", "render_driver",
-        &m_video_group, "Render video driver to use, at the moment opengl, vulkan or directx9 is supported.") );
+        &m_video_group, "Render video driver to use, at the moment opengl, vulkan, gxm or directx9 is supported.") );
+#elif defined(VITA)
+    // gxm talks to the Vita's GPU through libgxm directly. The alternative,
+    // opengl, goes through vitaGL, which is itself a GL translation layer over
+    // the same hardware, so the native path is the default.
+    PARAM_PREFIX StringUserConfigParam         m_render_driver
+        PARAM_DEFAULT(  StringUserConfigParam("gxm", "render_driver",
+        &m_video_group, "Render video driver to use, at the moment opengl, vulkan, gxm or directx9 is supported.") );
 #else
     PARAM_PREFIX StringUserConfigParam         m_render_driver
         PARAM_DEFAULT(  StringUserConfigParam("opengl", "render_driver",
-        &m_video_group, "Render video driver to use, at the moment opengl, vulkan or directx9 is supported.") );
+        &m_video_group, "Render video driver to use, at the moment opengl, vulkan, gxm or directx9 is supported.") );
 #endif
 
 #if defined(MOBILE_STK)

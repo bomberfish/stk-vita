@@ -33,6 +33,9 @@
 #ifndef SERVER_ONLY
 #include <ge_main.hpp>
 #include <ge_vulkan_driver.hpp>
+#ifdef _IRR_COMPILE_WITH_GXM_
+#include <ge_gxm_driver.hpp>
+#endif
 #endif
 
 using namespace GUIEngine;
@@ -124,10 +127,18 @@ void CustomVideoSettingsDialog::beforeAddingWidgets()
     rds->m_properties[PROP_WRAP_AROUND] = "true";
     rds->clearLabels();
     rds->addLabel("OpenGL");
+#if defined(VITA)
+    // No vulkan on a Vita. The choice there is between the native SceGxm
+    // renderer and OpenGL, which goes through vitaGL on the same hardware.
+    //I18N: video setting - GXM is the name of the PlayStation Vita graphics API
+    // and should not be translated
+    rds->addLabel("GXM");
+    const int rd_count = 2;
+#elif !defined(WIN32)
     rds->addLabel("Vulkan");
-#ifndef WIN32
     const int rd_count = 2;
 #else
+    rds->addLabel("Vulkan");
     const int rd_count = 3;
     rds->addLabel("DirectX9");
 #endif
@@ -270,6 +281,35 @@ GUIEngine::EventPropagation CustomVideoSettingsDialog::processEvent(const std::s
                 if (need_recreate_swapchain || pbr_changed || ibl_changed)
                     GE::getVKDriver()->updateDriver(need_recreate_swapchain, pbr_changed, ibl_changed);
             }
+            else if (GE::getDriver()->getDriverType() == video::EDT_GXM)
+            {
+                // The GXM renderer's shadow cascade is sized from the shadow
+                // setting, and its post processing chain and environment maps
+                // depend on PBR and IBL, so all three have to be pushed through
+                // before asking it to rebuild.
+                unsigned shadow_resolution = advanced_pipeline ?
+                    (unsigned)UserConfigParams::m_shadows_resolution : 0u;
+                bool shadows_changed = GE::getGEConfig()->m_shadow_resolution !=
+                    shadow_resolution;
+                GE::getGEConfig()->m_shadow_resolution = shadow_resolution;
+                GE::getGEConfig()->m_pbr = UserConfigParams::m_dynamic_lights;
+                GE::getGEConfig()->m_ibl = !UserConfigParams::m_degraded_IBL;
+                bool bloom_changed =
+                    GE::getGEConfig()->m_bloom != UserConfigParams::m_bloom;
+                GE::getGEConfig()->m_bloom = UserConfigParams::m_bloom;
+#ifdef _IRR_COMPILE_WITH_GXM_
+                if (GE::getGXMDriver() != NULL &&
+                    (pbr_changed || ibl_changed || shadows_changed ||
+                    bloom_changed))
+                {
+                    GE::getGXMDriver()->updateDriver(false, pbr_changed,
+                        ibl_changed);
+                }
+#else
+                (void)shadows_changed;
+                (void)bloom_changed;
+#endif
+            }
             // sameRestart will have the same effect
             if (!(CVS->isGLSL() && pbr_changed))
             {
@@ -304,6 +344,7 @@ void CustomVideoSettingsDialog::updateActivation(const std::string& renderer)
     bool light = getWidget<CheckBoxWidget>("dynamiclight")->getState();
     bool real_light = light;
     bool vk = GE::getDriver()->getDriverType() == video::EDT_VULKAN;
+    bool gxm = GE::getDriver()->getDriverType() == video::EDT_GXM;
     bool modern_gl = CVS->isGLSL();
 
     // If showing enabled options for a specific renderer has
@@ -311,11 +352,19 @@ void CustomVideoSettingsDialog::updateActivation(const std::string& renderer)
     if (renderer == "vulkan")
     {
         vk = true;
+        gxm = false;
+        modern_gl = false;
+    }
+    else if (renderer == "gxm")
+    {
+        vk = false;
+        gxm = true;
         modern_gl = false;
     }
     else if (renderer != "") // OpenGL or DirectX
     {
         vk = false;
+        gxm = false;
 
         if (renderer == "opengl" && !UserConfigParams::m_force_legacy_device)
             modern_gl = true;
@@ -324,27 +373,37 @@ void CustomVideoSettingsDialog::updateActivation(const std::string& renderer)
     }
 
     // Disable the options for advanced lighting if unavailable for this renderer
-    if (!vk && !modern_gl)
+    if (!vk && !gxm && !modern_gl)
     {
         getWidget<CheckBoxWidget>("dynamiclight")->setActive(false);
         light = false;
     }
 
-    if (vk)
+    if (vk || gxm)
     {
         getWidget<CheckBoxWidget>("dynamiclight")->setActive(true);
+        // "light" from here on means "the OpenGL advanced pipeline is on"; the
+        // GE renderers advertise their own subset below instead.
         light = false;
     }
     getWidget<CheckBoxWidget>("motionblur")->setActive(light);
     getWidget<CheckBoxWidget>("dof")->setActive(light);
-    getWidget<SpinnerWidget>("shadows")->setActive(light);
+    // The GXM renderer has a real shadow pass, and the resolution spinner is
+    // what sizes its cascade; the Vulkan one has no shadows at all.
+    getWidget<SpinnerWidget>("shadows")->setActive(light ||
+        (gxm && real_light));
     getWidget<CheckBoxWidget>("mlaa")->setActive(light);
     getWidget<CheckBoxWidget>("ssao")->setActive(light);
+    // Screen space reflection needs a depth and normal buffer to march through.
+    // Producing one on GXM would mean a second geometry pass, since the tile
+    // accelerator has no multiple render target support, so it is not offered.
     getWidget<CheckBoxWidget>("ssr")->setActive(light || (vk && real_light));
     getWidget<CheckBoxWidget>("lightshaft")->setActive(light);
-    getWidget<CheckBoxWidget>("ibl")->setActive(light || (vk && real_light));
+    getWidget<CheckBoxWidget>("ibl")->setActive(light ||
+        ((vk || gxm) && real_light));
     getWidget<CheckBoxWidget>("glow")->setActive(light);
-    getWidget<CheckBoxWidget>("bloom")->setActive(light);
+    getWidget<CheckBoxWidget>("bloom")->setActive(light ||
+        (gxm && real_light));
     getWidget<CheckBoxWidget>("lightscattering")->setActive(light);
 #endif
 }   // updateActivation

@@ -58,6 +58,10 @@
 #include <ge_spm.hpp>
 #include <ge_spm_buffer.hpp>
 
+#ifndef SERVER_ONLY
+#include <ge_main.hpp>
+#endif
+
 #define SKELETON_DEBUG 0
 
 float KartModel::UNDEFINED = -99.9f;
@@ -534,7 +538,7 @@ scene::ISceneNode* KartModel::attachModel(bool animated_models, bool human_playe
     bool supports_light = false;
 #else
     bool supports_light = (CVS->isGLSL() && CVS->isDeferredEnabled()) ||
-        irr_driver->getVideoDriver()->getDriverType() == video::EDT_VULKAN;
+        GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType());
 #endif
 
     // Attach the headlights
@@ -607,13 +611,16 @@ scene::ISceneNode* KartModel::attachModel(bool animated_models, bool human_playe
  */
 void HeadlightObject::setLight(scene::ISceneNode* parent)
 {
-    bool is_vk = irr_driver->getVideoDriver()->getDriverType() == video::EDT_VULKAN;
+    // Both graphics_engine renderers handle spot lights; the OpenGL one does
+    // not.
+    bool is_ge = GE::isGEDriverType(
+        irr_driver->getVideoDriver()->getDriverType());
     m_node = irr_driver->addLight(core::vector3df(0.0f, 0.0f, 0.0f),
         m_energy, m_radius, m_headlight_color.getRed() / 255.f,
         m_headlight_color.getGreen() / 255.f,
         m_headlight_color.getBlue() / 255.f, false/*sun*/, parent);
 
-    if (is_vk && m_headlight_type == HLT_SPOT)
+    if (is_ge && m_headlight_type == HLT_SPOT)
     {
         scene::ILightSceneNode* ln = static_cast<scene::ILightSceneNode*>(m_node);
         ln->setLightType(video::ELT_SPOT);

@@ -33,6 +33,9 @@
 #ifndef SERVER_ONLY
 #include <ge_main.hpp>
 #include <ge_vulkan_driver.hpp>
+#ifdef _IRR_COMPILE_WITH_GXM_
+#include <ge_gxm_driver.hpp>
+#endif
 #include <ge_texture.hpp>
 #endif
 
@@ -48,6 +51,17 @@ STKTexManager::~STKTexManager()
         gevd->waitIdle(/*flush_command_loader*/false);
         gevd->setDisableWaitIdle(true);
     }
+#ifdef _IRR_COMPILE_WITH_GXM_
+    // Same trick for GXM: drain once, then let the individual texture frees skip
+    // their own waits. Without this, removing every texture drains the GPU once
+    // per texture.
+    GE::GEGXMDriver* gegxm = GE::getGXMDriver();
+    if (gegxm)
+    {
+        gegxm->waitIdle();
+        gegxm->setDisableWaitIdle(true);
+    }
+#endif
 #endif
 
     removeTexture(NULL/*texture*/, true/*remove_all*/);
@@ -55,6 +69,10 @@ STKTexManager::~STKTexManager()
 #ifndef SERVER_ONLY
     if (gevd)
         gevd->setDisableWaitIdle(false);
+#ifdef _IRR_COMPILE_WITH_GXM_
+    if (gegxm)
+        gegxm->setDisableWaitIdle(false);
+#endif
 #endif
 }   // ~STKTexManager
 
@@ -260,6 +278,14 @@ void STKTexManager::reloadAllTextures(bool mesh_texture_only)
         gevd->waitIdle();
         gevd->setDisableWaitIdle(true);
     }
+#ifdef _IRR_COMPILE_WITH_GXM_
+    GE::GEGXMDriver* gegxm = GE::getGXMDriver();
+    if (gegxm)
+    {
+        gegxm->waitIdle();
+        gegxm->setDisableWaitIdle(true);
+    }
+#endif
 #endif
 
     std::set<std::string> mesh_texture_paths, icons;
@@ -334,5 +360,9 @@ void STKTexManager::reloadAllTextures(bool mesh_texture_only)
 #ifndef SERVER_ONLY
     if (gevd)
         gevd->setDisableWaitIdle(false);
+#ifdef _IRR_COMPILE_WITH_GXM_
+    if (gegxm)
+        gegxm->setDisableWaitIdle(false);
+#endif
 #endif
 }   // reloadAllTextures

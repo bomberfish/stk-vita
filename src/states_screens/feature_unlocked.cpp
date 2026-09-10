@@ -422,8 +422,8 @@ void FeatureUnlockedCutScene::init()
         else if (!m_unlocked_stuff[n].m_pictures.empty())
         {
 #ifndef SERVER_ONLY
-            bool vk = (GE::getDriver()->getDriverType() == video::EDT_VULKAN);
-            if (vk)
+            bool ge = GE::isGEDriverType(GE::getDriver()->getDriverType());
+            if (ge)
                 GE::getGEConfig()->m_convert_irrlicht_mesh = true;
 #endif
 
@@ -464,7 +464,7 @@ void FeatureUnlockedCutScene::init()
             mesh->drop();
 
 #ifndef SERVER_ONLY
-            if (vk)
+            if (ge)
                 GE::getGEConfig()->m_convert_irrlicht_mesh = false;
 #endif
 #ifdef DEBUG

@@ -83,7 +83,7 @@ scene::IAnimatedMesh* B3DMeshLoader::createMesh(io::IReadFile* f)
     }
 
 #ifndef SERVER_ONLY
-    bool convert_spm = CVS->isGLSL() || GE::getVKDriver() != NULL;
+    bool convert_spm = CVS->isGLSL() || GE::isGERenderer();
     if (convert_spm)
     {
         if (!AnimatedMesh)
@@ -1372,7 +1372,7 @@ void B3DMeshLoader::loadTextures(SB3dMaterial& material, scene::IMeshBuffer* mb)
 #endif
 
 #ifndef SERVER_ONLY
-            bool convert_spm = CVS->isGLSL() || GE::getVKDriver() != NULL;
+            bool convert_spm = CVS->isGLSL() || GE::isGERenderer();
             if (convert_spm)
             {
                 auto& ret = m_texture_string[mb];

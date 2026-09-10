@@ -25,6 +25,12 @@ public:
     // ------------------------------------------------------------------------
     void init(GEVulkanCameraSceneNode* cam);
     // ------------------------------------------------------------------------
+    /** Backend agnostic form of init(), taking the projection-view matrix and
+     *  the frustum's bounding box directly. Used by the GXM renderer, whose
+     *  camera node is not a GEVulkanCameraSceneNode. */
+    void init(const irr::core::matrix4& pvm,
+              const irr::core::aabbox3df& cam_bbox);
+    // ------------------------------------------------------------------------
     bool isCulled(irr::core::aabbox3df& bb);
     // ------------------------------------------------------------------------
     bool isCulled(const irr::core::vector3df& center, float radius);

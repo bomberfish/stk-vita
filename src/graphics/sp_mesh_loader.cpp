@@ -71,7 +71,7 @@ scene::IAnimatedMesh* SPMeshLoader::createMesh(io::IReadFile* f)
     m_mesh = NULL;
     bool ge_spm = false;
 #ifndef SERVER_ONLY
-    if (GE::getVKDriver())
+    if (GE::isGERenderer())
     {
         ge_spm = true;
         m_mesh = new GE::GESPM();

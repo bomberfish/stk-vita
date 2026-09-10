@@ -32,6 +32,8 @@
 
 #include <array>
 #include <ge_vulkan_dynamic_spm_buffer.hpp>
+#include <ge_gxm_dynamic_spm_buffer.hpp>
+#include <ge_main.hpp>
 #include <IMeshSceneNode.h>
 #include <IVideoDriver.h>
 #include <SMesh.h>
@@ -64,9 +66,19 @@ Shadow::Shadow(Material* shadow_mat, const AbstractKart& kart)
     {
         std::array<uint16_t, 6> indices = {{ 0, 1, 2, 0, 2, 3 }};
         scene::IMeshBuffer* buffer = NULL;
-        if (irr_driver->getVideoDriver()->getDriverType() == video::EDT_VULKAN)
+        if (GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
         {
-            buffer = new GE::GEVulkanDynamicSPMBuffer();
+            // Both graphics_engine renderers want an SPM buffer here, but the
+            // dynamic buffer class differs: the Vulkan one owns device memory,
+            // while the GXM one relies on the draw call copying its geometry
+            // into the per frame arena.
+#ifdef _IRR_COMPILE_WITH_GXM_
+            if (irr_driver->getVideoDriver()->getDriverType() ==
+                video::EDT_GXM)
+                buffer = new GE::GEGXMDynamicSPMBuffer();
+            else
+#endif
+                buffer = new GE::GEVulkanDynamicSPMBuffer();
             video::S3DVertexSkinnedMesh v;
             v.m_color = (video::SColor)-1;
             std::array<video::S3DVertexSkinnedMesh, 4> vertices =

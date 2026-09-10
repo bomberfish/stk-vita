@@ -23,6 +23,7 @@ namespace GE
 class GEOcclusionCulling;
 class GESPMBuffer;
 class GEVulkanDriver;
+class GEGXMDriver;
 enum GEAutoDeferredType : unsigned
 {
     GADT_DISABLED = 0,
@@ -54,12 +55,41 @@ GEScreenSpaceReflectionType m_screen_space_reflection_type;
 bool m_force_deferred;
 std::unordered_set<std::string> m_ondemand_load_texture_paths;
 float m_render_scale;
+/* Shadow cascade resolution for the GXM renderer, 0 to disable. Set from
+ * UserConfigParams::m_shadows_resolution so the existing shadow setting
+ * controls it. Unused by the Vulkan renderer, which has no shadow pass. */
+unsigned m_shadow_resolution;
+/* Whether the GXM renderer runs its bloom chain. Worth more than an effect
+ * toggle there: with it off the 3D scene renders straight into the display
+ * buffer and the whole frame is a single scene, so the colour never leaves the
+ * tile buffer. Set from UserConfigParams::m_bloom. */
+bool m_bloom;
 };
 
 void setVideoDriver(irr::video::IVideoDriver* driver);
 void setShaderFolder(const std::string& path);
+/* Where the GXM backend caches the shaders it compiles at runtime. The Vita has
+ * no offline Cg compiler available to a homebrew build, so the first launch
+ * compiles and every launch after that reads this directory. Empty disables
+ * caching. Ignored by every other backend. */
+void setGXMShaderCacheDir(const std::string& dir);
+const std::string& getGXMShaderCacheDir();
 irr::video::IVideoDriver* getDriver();
 GE::GEVulkanDriver* getVKDriver();
+GE::GEGXMDriver* getGXMDriver();
+/* True for the drivers implemented inside graphics_engine, i.e. the ones that
+ * replace irrlicht's scene manager with GE's own and expect SPM meshes, GE
+ * textures and GE materials. Most of the STK code that used to test for
+ * EDT_VULKAN meant "is the GE renderer in use", not "is it Vulkan", so it asks
+ * this instead - see isVulkanDriver()/isGXMDriver() for the cases where the
+ * distinction actually matters. */
+inline bool isGEDriverType(irr::video::E_DRIVER_TYPE type)
+{
+    return type == irr::video::EDT_VULKAN || type == irr::video::EDT_GXM;
+}
+bool isGERenderer();
+bool isVulkanDriver();
+bool isGXMDriver();
 const std::string& getShaderFolder();
 GEConfig* getGEConfig();
 void deinit();

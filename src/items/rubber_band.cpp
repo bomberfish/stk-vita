@@ -39,6 +39,7 @@
 #include <ge_main.hpp>
 #include <ge_material_manager.hpp>
 #include <ge_vulkan_dynamic_spm_buffer.hpp>
+#include <ge_gxm_dynamic_spm_buffer.hpp>
 #endif
 #include <IMeshSceneNode.h>
 #include <IVideoDriver.h>
@@ -88,9 +89,19 @@ RubberBand::RubberBand(Plunger *plunger, AbstractKart *kart)
     {
         std::array<uint16_t, 6> indices = {{ 0, 1, 2, 0, 2, 3 }};
         scene::IMeshBuffer* buffer = NULL;
-        if (irr_driver->getVideoDriver()->getDriverType() == video::EDT_VULKAN)
+        if (GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
         {
-            buffer = new GE::GEVulkanDynamicSPMBuffer();
+            // Both graphics_engine renderers want an SPM buffer here, but the
+            // dynamic buffer class differs: the Vulkan one owns device memory,
+            // while the GXM one relies on the draw call copying its geometry
+            // into the per frame arena.
+#ifdef _IRR_COMPILE_WITH_GXM_
+            if (irr_driver->getVideoDriver()->getDriverType() ==
+                video::EDT_GXM)
+                buffer = new GE::GEGXMDynamicSPMBuffer();
+            else
+#endif
+                buffer = new GE::GEVulkanDynamicSPMBuffer();
             video::S3DVertexSkinnedMesh v;
             v.m_normal = 0x1FF << 10;
             v.m_color = color;

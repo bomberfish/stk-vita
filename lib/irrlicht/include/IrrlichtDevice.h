@@ -369,6 +369,12 @@ namespace irr
 #else
 					return false;
 #endif
+				case video::EDT_GXM:
+#ifdef _IRR_COMPILE_WITH_GXM_
+					return true;
+#else
+					return false;
+#endif
 				default:
 					return false;
 			}

@@ -25,6 +25,10 @@
 #include "glad/gl.h"
 #include "ge_vulkan_driver.hpp"
 #include "ge_vulkan_scene_manager.hpp"
+#ifdef _IRR_COMPILE_WITH_GXM_
+#include "ge_gxm_driver.hpp"
+#include "ge_gxm_scene_manager.hpp"
+#endif
 #include "MoltenVK.h"
 
 #include <SDL_vulkan.h>
@@ -46,6 +50,10 @@ namespace irr
 #endif
 #ifdef _IRR_COMPILE_WITH_VULKAN_
 		IVideoDriver* createVulkanDriver(const SIrrlichtCreationParameters& params,
+			io::IFileSystem* io, SDL_Window* win, IrrlichtDevice* device);
+#endif
+#ifdef _IRR_COMPILE_WITH_GXM_
+		IVideoDriver* createGXMDriver(const SIrrlichtCreationParameters& params,
 			io::IFileSystem* io, SDL_Window* win, IrrlichtDevice* device);
 #endif
 	} // end namespace video
@@ -196,8 +204,8 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 
 	if (VideoDriver)
 	{
-		if (CreationParams.DriverType == video::EDT_VULKAN)
-			createGUIAndVulkanScene();
+		if (GE::isGEDriverType(CreationParams.DriverType))
+			createGUIAndGEScene();
 		else
 			createGUIAndScene();
 	}
@@ -227,6 +235,11 @@ CIrrDeviceSDL::~CIrrDeviceSDL()
 		GE::GEVulkanDriver* gevk = dynamic_cast<GE::GEVulkanDriver*>(VideoDriver);
 		if (gevk)
 			gevk->destroyVulkan();
+#ifdef _IRR_COMPILE_WITH_GXM_
+		GE::GEGXMDriver* gegxm = dynamic_cast<GE::GEGXMDriver*>(VideoDriver);
+		if (gegxm)
+			gegxm->destroyGXM();
+#endif
 		VideoDriver->drop();
 		VideoDriver = NULL;
 	}
@@ -427,7 +440,8 @@ bool CIrrDeviceSDL::createWindow()
 #if !defined(ANDROID) && !defined(__SWITCH__)
 	if (CreationParams.DriverType == video::EDT_OPENGL ||
 		CreationParams.DriverType == video::EDT_OGLES2 ||
-		CreationParams.DriverType == video::EDT_VULKAN)
+		CreationParams.DriverType == video::EDT_VULKAN ||
+		CreationParams.DriverType == video::EDT_GXM)
 		flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
 
@@ -707,6 +721,23 @@ void CIrrDeviceSDL::createDriver()
 		}
 		#else
 		os::Printer::log("No Vulkan support compiled in.", ELL_ERROR);
+		#endif
+		break;
+	}
+
+	case video::EDT_GXM:
+	{
+		#ifdef _IRR_COMPILE_WITH_GXM_
+		try
+		{
+			VideoDriver = video::createGXMDriver(CreationParams, FileSystem, Window, this);
+		}
+		catch (std::exception& e)
+		{
+			os::Printer::log("createGXMDriver failed", e.what(), ELL_ERROR);
+		}
+		#else
+		os::Printer::log("No SceGxm support compiled in.", ELL_ERROR);
 		#endif
 		break;
 	}
@@ -1658,7 +1689,7 @@ s32 CIrrDeviceSDL::getRightPadding()
 }
 
 
-void CIrrDeviceSDL::createGUIAndVulkanScene()
+void CIrrDeviceSDL::createGUIAndGEScene()
 {
 	#ifdef _IRR_COMPILE_WITH_GUI_
 	// create gui environment
@@ -1666,7 +1697,17 @@ void CIrrDeviceSDL::createGUIAndVulkanScene()
 	#endif
 
 	// create Scene manager
-	SceneManager = new GE::GEVulkanSceneManager(VideoDriver, FileSystem, CursorControl, GUIEnvironment);
+#ifdef _IRR_COMPILE_WITH_GXM_
+	if (CreationParams.DriverType == video::EDT_GXM)
+	{
+		SceneManager = new GE::GEGXMSceneManager(VideoDriver, FileSystem,
+			CursorControl, GUIEnvironment);
+	}
+	else
+#endif
+	{
+		SceneManager = new GE::GEVulkanSceneManager(VideoDriver, FileSystem, CursorControl, GUIEnvironment);
+	}
 
 	setEventReceiver(UserReceiver);
 }

@@ -11,8 +11,15 @@ namespace GE
 // ----------------------------------------------------------------------------
 void GECullingTool::init(GEVulkanCameraSceneNode* cam)
 {
-    mathPlaneFrustumf(&m_frustum[0].X, cam->getPVM());
-    m_cam_bbox = cam->getViewFrustum()->getBoundingBox();
+    init(cam->getPVM(), cam->getViewFrustum()->getBoundingBox());
+}   // init
+
+// ----------------------------------------------------------------------------
+void GECullingTool::init(const irr::core::matrix4& pvm,
+                         const irr::core::aabbox3df& cam_bbox)
+{
+    mathPlaneFrustumf(&m_frustum[0].X, pvm);
+    m_cam_bbox = cam_bbox;
 }   // init
 
 // ----------------------------------------------------------------------------

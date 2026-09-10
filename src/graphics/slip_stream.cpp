@@ -400,7 +400,7 @@ scene::IAnimatedMesh* SlipStream::createMesh(unsigned material_id,
 
     buffer->drop();
 #ifndef SERVER_ONLY
-    if (GE::getDriver()->getDriverType() == video::EDT_VULKAN)
+    if (GE::isGEDriverType(GE::getDriver()->getDriverType()))
     {
         amesh = GE::convertIrrlichtMeshToSPM(mesh);
         mesh->drop();

@@ -59,6 +59,10 @@
 #include <ISceneManager.h>
 #include <IVideoDriver.h>
 
+#ifndef SERVER_ONLY
+#include <ge_main.hpp>
+#endif
+
 // ----------------------------------------------------------------------------
 TrackObjectPresentation::TrackObjectPresentation(const XMLNode& xml_node)
 {
@@ -1029,7 +1033,7 @@ TrackObjectPresentationLight::TrackObjectPresentationLight(
     xml_node.get("distance", &m_distance);
 #ifndef SERVER_ONLY
     if (CVS->isGLSL() ||
-        irr_driver->getVideoDriver()->getDriverType() == video::EDT_VULKAN)
+        GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
     {
         m_node = irr_driver->addLight(m_init_xyz, m_energy, m_distance,
                                       colorf.r, colorf.g, colorf.b, false,

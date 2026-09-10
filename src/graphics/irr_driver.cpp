@@ -412,6 +412,12 @@ void IrrDriver::initDevice()
     std::string abs_shader_dir = file_manager->getFileSystem()
         ->getAbsolutePath(file_manager->getShadersDir().c_str()).c_str();
     GE::setShaderFolder(abs_shader_dir);
+    // The Vita has no offline shader compiler available to a homebrew build,
+    // so the GXM backend compiles its Cg at runtime and caches the result.
+    // First launch takes a few extra seconds; every launch after that reads
+    // the cache. A no-op on every other backend.
+    GE::setGXMShaderCacheDir(file_manager->getUserConfigDir() +
+        "gxm_shader_cache");
 #endif
     SIrrlichtCreationParameters params;
     core::stringw display_msg;
@@ -516,6 +522,30 @@ begin:
             driver_created = video::EDT_OGLES2;
 #else
             driver_created = video::EDT_OPENGL;
+#endif
+        }
+        else if (std::string(UserConfigParams::m_render_driver) == "gxm")
+        {
+            driver_created = video::EDT_GXM;
+#ifndef SERVER_ONLY
+            // The GXM renderer reads the same GE settings the Vulkan one does:
+            // it shares the material definitions, the scene graph and the SPM
+            // mesh format, and only the GPU facing half differs.
+            GE::getGEConfig()->m_texture_compression =
+                UserConfigParams::m_texture_compression;
+            GE::getGEConfig()->m_pbr =
+                UserConfigParams::m_dynamic_lights;
+            GE::getGEConfig()->m_ibl =
+                !UserConfigParams::m_degraded_IBL;
+            // Render scale is a Vulkan-only knob: the Vita panel is a fixed
+            // 960x544 and the GXM driver renders at exactly that.
+            GE::getGEConfig()->m_render_scale = 1.0f;
+            // Unlike the Vulkan renderer, the GXM one has a shadow pass, so
+            // STK's existing shadow resolution setting drives it. 0 disables.
+            GE::getGEConfig()->m_shadow_resolution =
+                UserConfigParams::m_dynamic_lights ?
+                (unsigned)UserConfigParams::m_shadows_resolution : 0u;
+            GE::getGEConfig()->m_bloom = UserConfigParams::m_bloom;
 #endif
         }
         else if (std::string(UserConfigParams::m_render_driver) == "directx9")
@@ -630,10 +660,32 @@ begin:
             }
             */
             m_device = createDeviceEx(params);
+            // A video driver that reports failure by throwing from its
+            // constructor - which is how both the vulkan and the SceGxm
+            // backends say "this GPU cannot do it" - leaves the device alive
+            // with a null video driver: createDeviceEx() only checks for that
+            // on the wayland device, not on the SDL one. Turn it into a failed
+            // creation here, or the fallbacks just below can never run and
+            // m_device->getVideoDriver() is dereferenced a few lines later.
+            if (m_device && !m_device->getVideoDriver())
+            {
+                m_device->closeDevice();
+                m_device->clearSystemMessages();
+                m_device->run();
+                m_device->drop();
+                m_device = NULL;
+            }
             if (!m_device && driver_created == video::EDT_VULKAN)
             {
                 display_msg = L"Vulkan unsupported";
                 UserConfigParams::m_render_driver.revertToDefaults();
+                goto begin;
+            }
+            if (!m_device && driver_created == video::EDT_GXM)
+            {
+                display_msg = L"SceGxm unavailable";
+                // Falls back to opengl, which on the Vita means vitaGL.
+                UserConfigParams::m_render_driver = "opengl";
                 goto begin;
             }
 
@@ -1441,7 +1493,7 @@ scene::ISceneNode *IrrDriver::addSphere(float radius,
 #endif
 
 #ifndef SERVER_ONLY
-    bool vk = (GE::getVKDriver() != NULL);
+    bool vk = (GE::isGERenderer());
     if (vk)
         GE::getGEConfig()->m_convert_irrlicht_mesh = true;
 #endif

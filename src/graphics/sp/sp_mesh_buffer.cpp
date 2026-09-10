@@ -481,7 +481,7 @@ void SPMeshBuffer::setSTKMaterial(Material* m)
     m_stk_material[0] = std::make_tuple(0u, getIndexCount(), m);
 #ifndef SERVER_ONLY
     // Used by b3d mesh loader, clean up later after SP is removed
-    if (GE::getVKDriver() != NULL)
+    if (GE::isGERenderer())
         return;
 #endif
     const std::string shader_name =

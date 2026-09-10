@@ -273,6 +273,11 @@ void OptionsScreenVideo::updateGfxSlider()
         //I18N: video setting - Vulkan is the name of a graphics API and should not be translated, only possibly moved
         gfx->setCustomText( _("3 (Vulkan)") );
     }
+    else if (GE::getDriver()->getDriverType() == video::EDT_GXM)
+    {
+        //I18N: video setting - GXM is the name of the PlayStation Vita graphics API and should not be translated, only possibly moved
+        gfx->setCustomText( _("3 (GXM)") );
+    }
     else if (preset == -1) // Current settings don't match a preset
     {
         //I18N: custom video settings

@@ -31,6 +31,10 @@
 #  include <android/log.h>
 #endif
 
+#ifdef VITA
+#  include <psp2/kernel/clib.h>
+#endif
+
 #ifdef IOS_STK
 #include "../../../lib/irrlicht/source/Irrlicht/CIrrDeviceiOS.h"
 #endif
@@ -265,6 +269,17 @@ void Log::writeLine(const char *line, int level)
             __android_log_print(alp, "SuperTuxKart", "%s", line);
 #elif defined(IOS_STK)
             CIrrDeviceiOS::debugPrint(line);
+#elif defined(VITA)
+            // The Vita has no console, and its stdout goes nowhere a developer
+            // can see. sceClibPrintf reaches the kernel's debug output, which is
+            // what Vita3K writes straight into its own log and what a hardware
+            // debug channel shows.
+            //
+            // This is not redundant with stdout.log: that file is written
+            // through sceIoWrite, and the host side of it is buffered, so a
+            // crash loses everything logged since the last flush - which is
+            // precisely the log you need. This path survives.
+            sceClibPrintf("%s", line);
 #else
             printf("%s", line);
             fflush(stdout);

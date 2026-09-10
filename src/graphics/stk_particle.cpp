@@ -28,6 +28,10 @@
 #include <ISceneManager.h>
 #include <IVideoDriver.h>
 
+#ifndef SERVER_ONLY
+#include <ge_main.hpp>
+#endif
+
 // ----------------------------------------------------------------------------
 std::vector<float> STKParticle::m_flips_data;
 GLuint STKParticle::m_flips_buffer = 0;
@@ -536,9 +540,9 @@ void STKParticle::OnRegisterSceneNode()
         p.color.setGreen(core::clamp((int)(ret.Y * 255.0f), 0, 255));
         p.color.setBlue(core::clamp((int)(ret.Z * 255.0f), 0, 255));
         p.color.setAlpha(core::clamp((int)(alpha * 255.0f), 0, 255));
-        if (irr_driver->getVideoDriver()->getDriverType() == video::EDT_VULKAN)
+        if (GE::isGEDriverType(irr_driver->getVideoDriver()->getDriverType()))
         {
-            // Only used in ge_vulkan_draw_call.cpp
+            // Only used by the graphics_engine draw calls
             p.startTime = i;
             p.startSize.Width = m_particles_generating[i].m_lifetime;
         }

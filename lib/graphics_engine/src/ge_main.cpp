@@ -3,6 +3,9 @@
 #include "ge_spm.hpp"
 #include "ge_spm_buffer.hpp"
 #include "ge_vulkan_driver.hpp"
+#ifdef _IRR_COMPILE_WITH_GXM_
+#include "ge_gxm_driver.hpp"
+#endif
 #include "mini_glm.hpp"
 
 #include "IMesh.h"
@@ -29,7 +32,9 @@ GEConfig g_config =
     GSSRT_DISABLED,
     false,
     {},
-    1.0f
+    1.0f,
+    1024,
+    false
 };
 std::string g_shader_folder = "";
 std::chrono::steady_clock::time_point g_mono_start =
@@ -58,6 +63,30 @@ GE::GEVulkanDriver* getVKDriver()
     return dynamic_cast<GE::GEVulkanDriver*>(g_driver);
 }
 
+GE::GEGXMDriver* getGXMDriver()
+{
+#ifdef _IRR_COMPILE_WITH_GXM_
+    return dynamic_cast<GE::GEGXMDriver*>(g_driver);
+#else
+    return NULL;
+#endif
+}
+
+bool isGERenderer()
+{
+    return g_driver && isGEDriverType(g_driver->getDriverType());
+}
+
+bool isVulkanDriver()
+{
+    return g_driver && g_driver->getDriverType() == irr::video::EDT_VULKAN;
+}
+
+bool isGXMDriver()
+{
+    return g_driver && g_driver->getDriverType() == irr::video::EDT_GXM;
+}
+
 GEConfig* getGEConfig()
 {
     return &g_config;
@@ -72,6 +101,20 @@ const std::string& getShaderFolder()
 {
     return g_shader_folder;
 }
+
+#ifndef _IRR_COMPILE_WITH_GXM_
+// Defined by ge_gxm_shader.cpp on the Vita; a no-op everywhere else so callers
+// do not have to be conditionally compiled.
+void setGXMShaderCacheDir(const std::string& dir)
+{
+}
+
+const std::string& getGXMShaderCacheDir()
+{
+    static const std::string empty;
+    return empty;
+}
+#endif
 
 void deinit()
 {
