@@ -165,7 +165,8 @@ bool COGLES2FixedPipelineRenderer::OnRender(IMaterialRendererServices* service, 
 
 		/* Textures Upload */
 
-		s32 TextureUsage0 = Driver->isActiveTexture(0);
+		// float, not s32 - see COGLES2Renderer2D.cpp
+		f32 TextureUsage0 = Driver->isActiveTexture(0) ? 1.0f : 0.0f;
 		//s32 TextureUsage1 = Driver->isActiveTexture(1);
 
 		IMaterialRendererServices::setPixelShaderConstant("uTextureUsage0", &TextureUsage0, 1);

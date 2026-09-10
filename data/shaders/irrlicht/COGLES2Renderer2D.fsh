@@ -6,7 +6,10 @@
 
 precision mediump float;
 
-uniform bool uUseTexture;
+// float rather than bool: GXP has no bool type, so vitaGL reports
+// bool uniforms as GL_FLOAT and irrlicht's int upload path then
+// silently refuses them (default: status = false).
+uniform float uUseTexture;
 uniform sampler2D uTextureUnit;
 
 varying vec4 vVertexColor;
@@ -16,7 +19,7 @@ void main(void)
 {
 	vec4 Color = vVertexColor;
 
-	if(uUseTexture)
+	if(uUseTexture > 0.5)
 		Color *= texture2D(uTextureUnit, vTexCoord);
 	
 	gl_FragColor = Color;

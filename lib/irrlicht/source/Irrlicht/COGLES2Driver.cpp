@@ -36,6 +36,22 @@ namespace video
 {
 	bool useCoreContext = true;
 
+#ifdef VITA
+	// useCoreContext defaults to true and is only ever assigned in the EGL
+	// constructor (from EglContext->isLegacyDevice()). The SDL device used on
+	// Vita never touches it, so it stays true and every useCoreContext guard
+	// below takes its early return. For setRenderStates2DMode() that silently
+	// discards the entire GUI: vitaGL reports GLSL ES 1.00, so STK runs its
+	// fixed pipeline (CVS->isGLSL() == false) and deliberately routes 2D
+	// through irrlicht, which then does nothing.
+	//
+	// Only the three state setters the 2D path actually needs are re-enabled.
+	// setRenderStates3DMode() is deliberately left bailing: STK does not need
+	// it at the menu, and enabling every guard at once drove vitaGL's
+	// fixed-function emulation into a SceGxm crash.
+	#define VITA_NEEDS_LEGACY_2D 1
+#endif
+
 //! constructor and init code
 #if defined(_IRR_COMPILE_WITH_X11_DEVICE_) || defined(_IRR_WINDOWS_API_) || defined(_IRR_COMPILE_WITH_ANDROID_DEVICE_)
 	COGLES2Driver::COGLES2Driver(const SIrrlichtCreationParameters& params,
@@ -1692,8 +1708,10 @@ namespace video
 	//! Can be called by an IMaterialRenderer to make its work easier.
 	void COGLES2Driver::setBasicRenderStates(const SMaterial& material, const SMaterial& lastmaterial, bool resetAllRenderStates)
 	{
+#ifndef VITA_NEEDS_LEGACY_2D
 		if (useCoreContext)
 			return;
+#endif
 
 		// ZBuffer
 		if (resetAllRenderStates || lastmaterial.ZBuffer != material.ZBuffer)
@@ -1823,8 +1841,10 @@ namespace video
 	//! Compare in SMaterial doesn't check texture parameters, so we should call this on each OnRender call.
 	void COGLES2Driver::setTextureRenderStates(const SMaterial& material, bool resetAllRenderstates)
 	{
+#ifndef VITA_NEEDS_LEGACY_2D
 		if (useCoreContext)
 			return;
+#endif
 
 		// Set textures to TU/TIU and apply filters to them
 
@@ -1932,8 +1952,10 @@ namespace video
 	//! sets the needed renderstates
 	void COGLES2Driver::setRenderStates2DMode(bool alpha, bool texture, bool alphaChannel)
 	{
+#ifndef VITA_NEEDS_LEGACY_2D
 		if (useCoreContext)
 			return;
+#endif
 
 		if (CurrentRenderMode != ERM_2D)
 		{

@@ -379,7 +379,9 @@ bool MusicOggStream::streamIntoBuffer(ALuint buffer)
     {
         // Opus decodes to 16-bit PCM samples; op_read() returns
         // samples per channel (not bytes).
-        opus_int16 pcm[m_buffer_size / 2];  // buffer_size is in bytes
+        // Decoded into the member scratch buffer, not the stack: see
+        // m_pcm_buffer in the header
+        opus_int16* pcm = (opus_int16*)m_pcm_buffer;  // buffer_size is in bytes
         int max_samples = m_buffer_size / 2 / m_opusHead->channel_count;
         int total_samples = 0;
 
@@ -406,7 +408,7 @@ bool MusicOggStream::streamIntoBuffer(ALuint buffer)
     }
 #endif
 
-    char pcm[m_buffer_size];
+    char* pcm = m_pcm_buffer;
     const int isBigEndian = (IS_LITTLE_ENDIAN ? 0 : 1);
 
     int  size = 0;

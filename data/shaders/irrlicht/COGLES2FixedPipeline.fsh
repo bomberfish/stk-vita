@@ -22,7 +22,8 @@ uniform int uMaterialType;
 uniform float uHueChange;
 uniform vec4 uVertexColor;
 
-uniform bool uTextureUsage0;
+// float rather than bool - see COGLES2Renderer2D.fsh
+uniform float uTextureUsage0;
 //uniform bool uTextureUsage1;
 
 uniform sampler2D uTextureUnit0;
@@ -56,7 +57,7 @@ vec3 hsvToRgb(vec3 c)
 vec4 renderSolid()
 {
 	vec4 Color = vec4(1.0, 1.0, 1.0, 1.0);
-	if(uTextureUsage0)
+	if(uTextureUsage0 > 0.5)
 	{
 		Color *= texture2D(uTextureUnit0, varTexCoord0);
 		if (uHueChange > 0.0)
@@ -135,7 +136,7 @@ vec4 renderTransparent()
 {
 	vec4 Color = vec4(1.0, 1.0, 1.0, 1.0);
 
-	if(uTextureUsage0)
+	if(uTextureUsage0 > 0.5)
 	{
 		Color *= texture2D(uTextureUnit0, varTexCoord0);
 		if (uHueChange > 0.0)
@@ -153,7 +154,7 @@ vec4 renderTransparent()
 vec4 renderTransparentVertexColor()
 {
 	vec4 Color = vec4(1.0, 1.0, 1.0, 1.0);
-	if(uTextureUsage0)
+	if(uTextureUsage0 > 0.5)
 	{
 		Color *= texture2D(uTextureUnit0, varTexCoord0);
 		if (uHueChange > 0.0)

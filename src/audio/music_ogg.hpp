@@ -103,6 +103,12 @@ private:
     // One quarter second at 44100 Hz stereo 16-bit
     static const int m_buffer_size = 11025 * 4;
 #endif
+
+    /** Scratch buffer that streamIntoBuffer() decodes into. This is a member
+     *  rather than a local: at m_buffer_size bytes it overflows the default
+     *  stack of the SFX manager thread on platforms with small thread stacks
+     *  (it crashed the PS Vita port). Only ever touched from that thread. */
+    char m_pcm_buffer[m_buffer_size];
 };
 
 #endif

@@ -564,6 +564,16 @@ begin:
         if (UserConfigParams::m_swap_interval > 1)
             UserConfigParams::m_swap_interval = 1;
 
+        // NOTE: do NOT call vglSetSemanticBindingMode() here. vitaGL's default
+        // is VGL_MODE_POSTPONED, and that is the only mode which honours
+        // glBindAttribLocation() being called between glCompileShader() and
+        // glLinkProgram() - it records the name->index map and applies it at
+        // link time. Every other mode resolves the name against an already
+        // built GXP program and returns silently when it cannot, which throws
+        // away all of irrlicht's attribute bindings (see
+        // COGLES2MaterialRenderer::init, which binds at that exact point).
+        // Switching to VGL_MODE_SHADER_PAIR here broke vertex attributes.
+
 #ifndef SERVER_ONLY // No GUI files in server builds
         OptionsScreenVideo::setSSR();
 #endif

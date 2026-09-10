@@ -80,7 +80,10 @@ bool COGLES2Renderer2D::OnRender(IMaterialRendererServices* service, E_VERTEX_TY
 		RenderTargetSize = renderTargetSize;
 	}
 
-	int UseTexture = Texture ? 1 : 0;
+	// Uploaded as a float: the shader declares uUseTexture as float because
+	// GXP has no bool type (vitaGL reports GL_FLOAT), and irrlicht's integer
+	// upload path has no GL_FLOAT case so it would silently drop the value.
+	float UseTexture = Texture ? 1.0f : 0.0f;
 	setPixelShaderConstant(UseTextureID, &UseTexture, 1);
 
 	return true;
