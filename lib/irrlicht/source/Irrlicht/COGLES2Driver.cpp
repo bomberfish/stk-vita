@@ -401,16 +401,45 @@ namespace video
 		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_TRANSPARENT_VERTEX_ALPHA, this));
 		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_TRANSPARENT_REFLECTION_2_LAYER, this));
 
+		// addAndDropMaterialRenderer() appends sequentially and
+		// MaterialRenderers is indexed by E_MATERIAL_TYPE, so these three
+		// slots must always be filled: skipping them shifts every later
+		// renderer (parallax, ONETEXTURE_BLEND, STK_GRASS) down by three and
+		// setRenderStates3DMode() then dereferences the wrong one. Harmless
+		// while only 2D draws, since 2D never indexes this table.
+#ifdef VITA_NEEDS_LEGACY_2D
+		// vitaGL's GLSL translator cannot compile COGLES2NormalMap.vsh: it
+		// runs out of varying slots for the varLightColor[]/varLightVector[]
+		// arrays ("cannot be bound as the resource has already been claimed"),
+		// leaving Program == 0 and handing a null program to SceGxm on the
+		// first draw. STK never selects EMT_NORMAL_MAP_* on the legacy
+		// pipeline, so fill the slots with the fixed pipeline renderer - which
+		// does compile - purely to keep the indices aligned.
+		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_NORMAL_MAP_SOLID, this));
+		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_NORMAL_MAP_TRANSPARENT_ADD_COLOR, this));
+		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_NORMAL_MAP_TRANSPARENT_VERTEX_ALPHA, this));
+#else
 		if (!useCoreContext)
 		{
 			addAndDropMaterialRenderer(new COGLES2NormalMapRenderer(NMVSData, NMFSData, EMT_NORMAL_MAP_SOLID, this));
 			addAndDropMaterialRenderer(new COGLES2NormalMapRenderer(NMVSData, NMFSData, EMT_NORMAL_MAP_TRANSPARENT_ADD_COLOR, this));
 			addAndDropMaterialRenderer(new COGLES2NormalMapRenderer(NMVSData, NMFSData, EMT_NORMAL_MAP_TRANSPARENT_VERTEX_ALPHA, this));
 		}
+#endif
 
+#ifdef VITA_NEEDS_LEGACY_2D
+		// COGLES2ParallaxMap.vsh shares the varLightColor[]/varLightVector[]
+		// varying arrays that vitaGL's translator cannot allocate, so it fails
+		// to compile exactly like the normal map shader. Substitute the fixed
+		// pipeline renderer to keep the E_MATERIAL_TYPE indices aligned.
+		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_PARALLAX_MAP_SOLID, this));
+		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_PARALLAX_MAP_TRANSPARENT_ADD_COLOR, this));
+		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_PARALLAX_MAP_TRANSPARENT_VERTEX_ALPHA, this));
+#else
 		addAndDropMaterialRenderer(new COGLES2ParallaxMapRenderer(PMVSData, PMFSData, EMT_PARALLAX_MAP_SOLID, this));
 		addAndDropMaterialRenderer(new COGLES2ParallaxMapRenderer(PMVSData, PMFSData, EMT_PARALLAX_MAP_TRANSPARENT_ADD_COLOR, this));
 		addAndDropMaterialRenderer(new COGLES2ParallaxMapRenderer(PMVSData, PMFSData, EMT_PARALLAX_MAP_TRANSPARENT_VERTEX_ALPHA, this));
+#endif
 
 		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_ONETEXTURE_BLEND, this));
 		addAndDropMaterialRenderer(new COGLES2FixedPipelineRenderer(FPVSData, FPFSData, EMT_STK_GRASS, this));
@@ -1667,8 +1696,10 @@ namespace video
 
 	void COGLES2Driver::setRenderStates3DMode()
 	{
+#ifndef VITA_NEEDS_LEGACY_2D
 		if (useCoreContext)
 			return;
+#endif
 
 		if (CurrentRenderMode != ERM_3D)
 		{
